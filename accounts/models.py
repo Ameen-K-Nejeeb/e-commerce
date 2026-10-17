@@ -27,29 +27,29 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-    class User(AbstractUser):
-        class Role(models.TextChoices):
-            ADMIN = 'ADMIN', 'Admin'
-            MENTOR = 'MENTOR', 'Mentor'
-            USER = 'USER', 'User'
+class User(AbstractUser):
+    class Role(models.TextChoices):
+        ADMIN = 'ADMIN', 'Admin'
+        MENTOR = 'MENTOR', 'Mentor'
+        USER = 'USER', 'User'
 
-        user = None
-        email = models.EmailField(unique=True)
+    user = None
+    email = models.EmailField(unique=True)
 
-        role = models.CharField(
-            max_length=10,
-            choices=Role.choices,
-            default=Role.User,
-            help_text='Determines user permissions across the platform'
-        )
+    role = models.CharField(
+        max_length=10, 
+        choices=Role.choices, 
+        default=Role.USER,
+        help_text="Determines user permissions across the platform"
+    )
 
-        is_google_account = models.BooleanField(default=False)
-        profile_picture = models.URLField(blank=True, null=True)
+    is_google_account = models.BooleanField(default=False)
+    profile_picture = models.URLField(blank=True, null=True)
 
-        USERNAME_FIELD = 'email'
-        REQUIRED_FIELDS = []
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
 
-        objects = CustomUserManager()
+    objects = CustomUserManager()
 
-        def __str__(self):
-            return f"{self.email} ({self.role})"
+    def __str__(self):
+        return f"{self.email} ({self.role})"
