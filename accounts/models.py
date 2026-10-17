@@ -33,7 +33,7 @@ class User(AbstractUser):
         MENTOR = 'MENTOR', 'Mentor'
         USER = 'USER', 'User'
 
-    user = None
+    username = None
     email = models.EmailField(unique=True)
 
     role = models.CharField(
