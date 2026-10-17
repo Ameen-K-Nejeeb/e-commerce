@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'accounts',
+    'store',
 ]
 
 MIDDLEWARE = [
@@ -164,3 +165,10 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+
+
+
+# Payment gateway settings
+RAZORPAY_KEY_ID = 'rzp_test_placeholder_key'
+RAZORPAY_KEY_SECRET = 'placeholder_secret'
