@@ -12,7 +12,8 @@ import {
   Store, 
   PackageOpen, 
   SlidersHorizontal,
-  ExternalLink
+  ExternalLink,
+  Layers
 } from 'lucide-react';
 
 export default function Catalog() {
@@ -26,21 +27,22 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true);
   const [addedIds, setAddedIds] = useState([]);
 
+  // Vendor toggle: show all products vs only this vendor's items
+  const [onlyMyProducts, setOnlyMyProducts] = useState(false);
+
   const { addToCart } = useCart();
   const { user } = useAuth();
   const isVendor = user?.role === 'VENDOR';
 
-  // Fetch initial category list
   useEffect(() => {
     api.get('store/categories/')
       .then((res) => setCategories(res.data))
       .catch((err) => console.error('Error fetching categories:', err));
   }, []);
 
-  // Fetch products with backend search and filtering query parameters
   useEffect(() => {
     fetchProducts();
-  }, [selectedCategory, ordering]);
+  }, [selectedCategory, ordering, onlyMyProducts]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -51,6 +53,11 @@ export default function Catalog() {
       if (ordering) params.ordering = ordering;
       if (minPrice) params.min_price = minPrice;
       if (maxPrice) params.max_price = maxPrice;
+
+      // When vendor toggles "My Products", tell Django to scope to this vendor
+      if (isVendor && onlyMyProducts) {
+        params.my_products = 'true';
+      }
 
       const res = await api.get('store/products/', { params });
       setProducts(res.data);
@@ -72,6 +79,7 @@ export default function Catalog() {
     setMinPrice('');
     setMaxPrice('');
     setOrdering('-created_at');
+    setOnlyMyProducts(false);
   };
 
   const handleAddToCart = (product) => {
@@ -85,7 +93,7 @@ export default function Catalog() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       
-      {/* Search Bar & Primary Controls */}
+      {/* Top Header & Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Marketplace Catalog</h1>
@@ -94,12 +102,34 @@ export default function Catalog() {
           </p>
         </div>
 
+        {/* Vendor Inventory Toggle */}
+        {isVendor && (
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => setOnlyMyProducts(false)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                !onlyMyProducts ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              All Marketplace
+            </button>
+            <button
+              onClick={() => setOnlyMyProducts(true)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                onlyMyProducts ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" /> My Products
+            </button>
+          </div>
+        )}
+
         {/* Search Input */}
-        <form onSubmit={handleSearchSubmit} className="relative w-full md:w-96">
+        <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search shoes, shirts, watches, phones..."
+            placeholder="Search catalog..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-20 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
@@ -157,7 +187,7 @@ export default function Catalog() {
         </div>
       </div>
 
-      {/* Main Grid View */}
+      {/* Product Grid */}
       {loading ? (
         <div className="py-24 flex justify-center">
           <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -165,21 +195,35 @@ export default function Catalog() {
       ) : products.length === 0 ? (
         <div className="text-center py-24 bg-white rounded-2xl border border-gray-100 mt-8 shadow-sm">
           <PackageOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-gray-900">No products match your criteria</h3>
+          <h3 className="text-lg font-bold text-gray-900">
+            {onlyMyProducts ? 'You haven’t listed any products yet' : 'No products match your criteria'}
+          </h3>
           <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
-            Try adjusting your search keywords, clear category filters, or explore our new arrivals.
+            {onlyMyProducts 
+              ? 'Visit your Vendor Studio to create your first listing.' 
+              : 'Try adjusting your search keywords or resetting filters.'}
           </p>
-          <button
-            onClick={handleClearFilters}
-            className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition-colors"
-          >
-            Reset Filters
-          </button>
+          {onlyMyProducts ? (
+            <Link
+              to="/vendor/studio"
+              className="mt-4 inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors"
+            >
+              Go to Vendor Studio
+            </Link>
+          ) : (
+            <button
+              onClick={handleClearFilters}
+              className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition-colors"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
           {products.map((product) => {
             const isAdded = addedIds.includes(product.id);
+            const isMyProduct = isVendor && Number(user?.id) === Number(product.vendor_user_id);
             const primaryImage = product.images?.find((img) => img.is_primary)?.image_url 
               || product.images?.[0]?.image_url 
               || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500';
@@ -193,7 +237,6 @@ export default function Catalog() {
                 key={product.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-lg transition-all duration-200 group"
               >
-                {/* Clickable Image Section linked to /product/:id */}
                 <Link to={`/product/${product.id}`} className="relative aspect-square w-full bg-gray-50 overflow-hidden block">
                   <img
                     src={primaryImage}
@@ -207,13 +250,15 @@ export default function Catalog() {
                     </span>
                   )}
 
-                  <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-gray-700 text-[11px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
-                    <Store className="w-3 h-3 text-indigo-600" />
-                    {product.vendor_name}
+                  {/* Vendor Store Tag */}
+                  <span className={`absolute bottom-3 left-3 backdrop-blur-sm text-[11px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm ${
+                    isMyProduct ? 'bg-emerald-600 text-white' : 'bg-white/90 text-gray-700'
+                  }`}>
+                    <Store className={`w-3 h-3 ${isMyProduct ? 'text-white' : 'text-indigo-600'}`} />
+                    {isMyProduct ? 'Your Store' : product.vendor_name}
                   </span>
                 </Link>
 
-                {/* Content Section */}
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between text-xs text-gray-400 font-medium mb-1">
@@ -226,7 +271,6 @@ export default function Catalog() {
                       )}
                     </div>
 
-                    {/* Clickable Title linked to /product/:id */}
                     <Link to={`/product/${product.id}`}>
                       <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-1 group-hover:text-indigo-600 transition-colors">
                         {product.name}
@@ -244,7 +288,6 @@ export default function Catalog() {
                     </p>
                   </div>
 
-                  {/* Pricing & Contextual Action */}
                   <div className="pt-4 mt-3 border-t border-gray-50 flex items-center justify-between">
                     <div>
                       <div className="flex items-baseline gap-1.5">
@@ -264,14 +307,22 @@ export default function Catalog() {
                       </p>
                     </div>
 
-                    {/* If Vendor: Show 'View Details / Edit' link. If Customer/Guest: Show Add to Cart */}
-                    {isVendor ? (
+                    {/* Action Button: Edit for Owner, Details for Other Vendors, Add to Cart for Customers */}
+                    {isMyProduct ? (
                       <Link
                         to={`/product/${product.id}`}
-                        className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1 shadow-sm"
-                        title="Inspect or edit this listing"
+                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1 shadow-sm"
+                        title="Edit your product"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" /> Details
+                        Edit
+                      </Link>
+                    ) : isVendor ? (
+                      <Link
+                        to={`/product/${product.id}`}
+                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold rounded-xl transition-colors flex items-center gap-1"
+                        title="Inspect listing"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> View
                       </Link>
                     ) : (
                       <button
@@ -284,7 +335,7 @@ export default function Catalog() {
                             ? 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         }`}
-                        title={product.stock > 0 ? 'Add to Cart' : 'Item Sold Out'}
+                        title={product.stock > 0 ? 'Add to Cart' : 'Sold Out'}
                       >
                         {isAdded ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
                       </button>

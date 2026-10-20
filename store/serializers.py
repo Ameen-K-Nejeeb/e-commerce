@@ -40,24 +40,36 @@ class ProductReviewSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.ReadOnlyField(source='category.name')
     vendor_name = serializers.ReadOnlyField(source='vendor.store_name')
+    vendor_user_id = serializers.ReadOnlyField(source='vendor.user.id')  
+    category_name = serializers.ReadOnlyField(source='category.name')
     images = ProductImageSerializer(many=True, read_only=True)
     variants = ProductVariantSerializer(many=True, read_only=True)
-    effective_price = serializers.ReadOnlyField()
-    average_rating = serializers.ReadOnlyField()
 
     class Meta:
         model = Product
         fields = (
-            'id', 'name', 'slug', 'brand', 'description',
-            'base_price', 'discount_price', 'effective_price',
-            'stock', 'sku', 'category', 'category_name',
-            'vendor', 'vendor_name', 'images', 'variants',
-            'average_rating', 'is_active', 'created_at'
+            'id',
+            'name',
+            'slug',
+            'vendor',
+            'vendor_name',
+            'vendor_user_id',       
+            'category',
+            'category_name',
+            'brand',
+            'sku',
+            'base_price',
+            'discount_price',
+            'effective_price',
+            'stock',
+            'description',
+            'images',
+            'variants',
+            'average_rating',
+            'created_at',
         )
-        read_only_fields = ('vendor', 'created_at')
-
+        read_only_fields = ('id', 'slug', 'effective_price', 'average_rating', 'created_at')
 
 class VendorProfileSerializer(serializers.ModelSerializer):
     user_email = serializers.ReadOnlyField(source='user.email')

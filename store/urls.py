@@ -16,7 +16,7 @@ from .views import VendorOrdersListView, VendorFulfillmentUpdateView, ProductIma
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
-router.register(r'products', ProductViewSet)
+router.register(r'products', ProductViewSet, basename='products') 
 router.register(r'vendors', VendorProfileViewSet)
 router.register(r'reviews', ProductReviewViewSet, basename='reviews')
 router.register(r'complaints', ComplaintTicketViewSet, basename='complaints')

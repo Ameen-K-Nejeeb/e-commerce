@@ -38,6 +38,13 @@ from rest_framework import status, permissions
 from .models import Order
 
 
+from rest_framework import viewsets, permissions, filters, status
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from .models import Product, VendorProfile
+from .serializers import ProductSerializer
+from accounts.permissions import IsVendorRole
+
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -49,14 +56,38 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(is_active=True, vendor__is_approved=True)
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description', 'brand', 'category__name']
     ordering_fields = ['base_price', 'created_at']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        user = self.request.user
+        queryset = Product.objects.select_related('vendor', 'category').prefetch_related('images', 'variants')
+
+        # 1. Vendor Studio explicitly requests only their inventory
+        my_products = self.request.query_params.get('my_products')
+        if my_products == 'true' and user.is_authenticated:
+            try:
+                vendor = VendorProfile.objects.get(user=user)
+                return queryset.filter(vendor=vendor)
+            except VendorProfile.DoesNotExist:
+                return queryset.none()
+
+        # 2. Direct modification actions (PUT, PATCH, DELETE) restricted to owner
+        if self.action in ['update', 'partial_update', 'destroy']:
+            if user.is_authenticated:
+                try:
+                    vendor = VendorProfile.objects.get(user=user)
+                    return queryset.filter(vendor=vendor)
+                except VendorProfile.DoesNotExist:
+                    return queryset.none()
+            return queryset.none()
+
+        # 3. Main Marketplace Catalog: SHOW ALL APPROVED, ACTIVE PRODUCTS
+        queryset = queryset.filter(is_active=True, vendor__is_approved=True)
+
         category = self.request.query_params.get('category')
         min_price = self.request.query_params.get('min_price')
         max_price = self.request.query_params.get('max_price')
@@ -67,16 +98,8 @@ class ProductViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(base_price__gte=min_price)
         if max_price:
             queryset = queryset.filter(base_price__lte=max_price)
+
         return queryset
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [permissions.AllowAny()]
-        return [IsVendorRole()]
-
-    def perform_create(self, serializer):
-        vendor = VendorProfile.objects.get(user=self.request.user)
-        serializer.save(vendor=vendor)
 
 
 class VendorProfileViewSet(viewsets.ModelViewSet):
