@@ -27,6 +27,7 @@ urlpatterns = [
     path('checkout/verify-payment/', VerifyPaymentView.as_view(), name='checkout_verify_payment'),
     path('user/orders/', UserOrdersView.as_view(), name='user_orders'),
 
+    path('vendors/me/', VendorProfileViewSet.as_view({'get': 'me'}), name='vendor-me'),
     path('vendor/orders/', VendorOrdersListView.as_view(), name='vendor_orders'),
     path('vendor/fulfillment/update/', VendorFulfillmentUpdateView.as_view(), name='vendor_fulfillment_update'),
 

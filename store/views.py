@@ -101,7 +101,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-
+from rest_framework.decorators import action
 class VendorProfileViewSet(viewsets.ModelViewSet):
     queryset = VendorProfile.objects.all()
     serializer_class = VendorProfileSerializer
@@ -111,9 +111,17 @@ class VendorProfileViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def me(self, request):
+        try:
+            vendor = VendorProfile.objects.get(user=request.user)
+            serializer = self.get_serializer(vendor)
+            return Response(serializer.data)
+        except VendorProfile.DoesNotExist:
+            return Response(
+                {"detail": "No vendor profile found for the logged-in user."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 class CreateCheckoutOrderView(APIView):
     permission_classes = [permissions.IsAuthenticated]

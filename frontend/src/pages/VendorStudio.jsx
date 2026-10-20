@@ -16,7 +16,7 @@ import {
   Edit3
 } from 'lucide-react';
 
-export default async function VendorStudio() {
+export default function VendorStudio() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'orders'
   const [vendorProfile, setVendorProfile] = useState(null);
@@ -52,20 +52,29 @@ export default async function VendorStudio() {
 
 
   // Inside src/pages/VendorStudio.jsx -> fetchVendorStudioData
+// src/pages/VendorStudio.jsx
+
 const fetchVendorStudioData = async () => {
   setLoading(true);
   try {
-    // 1. Fetch current vendor profile
-    const profileRes = await api.get('store/vendors/me/'); 
-    // OR if you list vendors: profileRes = await api.get('store/vendors/');
-    
-    // 2. IMPORTANT: Use ?my_products=true so Django returns ONLY this vendor's items
+    // 1. Fetch vendor profile (with fallback)
+    let profileData = null;
+    try {
+      const meRes = await api.get('store/vendors/me/');
+      profileData = meRes.data;
+    } catch (err) {
+      // Fallback: search through vendors list by current user ID
+      const allRes = await api.get('store/vendors/');
+      profileData = allRes.data.find(
+        (v) => Number(v.user) === Number(user?.id) || v.user_email === user?.email
+      );
+    }
+
+    setVendorProfile(profileData);
+
+    // 2. Fetch only this vendor's items
     const prodRes = await api.get('store/products/?my_products=true');
     setProducts(prodRes.data);
-
-    // 3. Fetch incoming orders for this vendor
-    const ordersRes = await api.get('store/vendor/orders/');
-    setOrders(ordersRes.data);
   } catch (err) {
     console.error('Failed to load studio data:', err);
   } finally {
