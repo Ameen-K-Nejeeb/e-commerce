@@ -1,10 +1,8 @@
-from django.db import models
-
+# accounts/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 class CustomUserManager(BaseUserManager):
-
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
@@ -30,8 +28,8 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractUser):
     class Role(models.TextChoices):
         ADMIN = 'ADMIN', 'Admin'
-        MENTOR = 'MENTOR', 'Mentor'
-        USER = 'USER', 'User'
+        VENDOR = 'VENDOR', 'Vendor'
+        CUSTOMER = 'CUSTOMER', 'Customer'
 
     username = None
     email = models.EmailField(unique=True)
@@ -39,7 +37,7 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=10, 
         choices=Role.choices, 
-        default=Role.USER,
+        default=Role.CUSTOMER,
         help_text="Determines user permissions across the platform"
     )
 

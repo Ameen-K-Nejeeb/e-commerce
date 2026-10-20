@@ -1,79 +1,129 @@
-from django.db import models
-
-# Create your models here.
-
+# store/models.py
 from django.db import models
 from django.conf import settings
 from decimal import Decimal
 
-
 User = settings.AUTH_USER_MODEL
+
 
 class Category(models.Model):
     name = models.CharField(max_length=120, unique=True)
     slug = models.SlugField(max_length=140, unique=True)
     description = models.TextField(blank=True)
+    icon = models.CharField(max_length=50, blank=True, help_text="Lucide icon name e.g. Smartphone, Shirt, Watch")
 
     class Meta:
-        verbose_name_plural = 'Categories'
+        verbose_name_plural = "Categories"
 
     def __str__(self):
         return self.name
 
 
-class Product(models.Model):
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='product')
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_products')
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    stock = models.PositiveIntegerField(default=1)
-    is_active = models.BooleanField(default=True)
+class VendorProfile(models.Model):
+    """Business profile created when a user registers as or applies to be a Vendor."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vendor_profile')
+    store_name = models.CharField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=220, unique=True)
+    description = models.TextField(blank=True)
+    business_email = models.EmailField()
+    phone_number = models.CharField(max_length=20)
+    address = models.TextField()
+    is_approved = models.BooleanField(default=False, help_text="Admin must approve vendor before products go live")
+    commission_percentage = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('10.00'))
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} - ₹{self.price}"
+        return f"{self.store_name} ({'Approved' if self.is_approved else 'Pending'})"
 
 
+class Product(models.Model):
+    """Universal product model for any retail category."""
+    vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='products')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=270, unique=True)
+    brand = models.CharField(max_length=100, blank=True)
+    description = models.TextField()
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    stock = models.PositiveIntegerField(default=0, help_text="Default inventory if no variants are used")
+    sku = models.CharField(max_length=60, unique=True, help_text="Stock Keeping Unit")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-class MentorProfile(models.Model):
-    mentor = models.OneToOneField(User, on_delete=models.CASCADE, related_name='mentor_profile')
-    title = models.CharField(max_length=150, help_text='e.g. Senior Full-Stack Architect')
-    bio = models.TextField()
-    hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('500.00'))
-    is_approved = models.BooleanField(default=False)
+    @property
+    def effective_price(self):
+        return self.discount_price if self.discount_price else self.base_price
+
+    @property
+    def average_rating(self):
+        reviews = self.reviews.all()
+        if reviews.exists():
+            return round(sum([r.rating for r in reviews]) / reviews.count(), 1)
+        return 0.0
 
     def __str__(self):
-        return f"Mentor : {self.mentor.email} ({self.title})"
+        return f"{self.name} - ₹{self.effective_price}"
 
 
-class MentorshipSlot(models.Model):
-    mentor = models.ForeignKey(MentorProfile, on_delete=models.CASCADE, related_name='slots')
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    is_booked = models.BooleanField(default=False)
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image_url = models.URLField(help_text="Direct URL to Cloudinary, S3, or media URL")
+    is_primary = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.mentor.mentor.email} | {self.start_time.strftime('%Y-%m-%d %H:%M')}"
+        return f"Image for {self.product.name}"
+
+
+class ProductVariant(models.Model):
+    """
+    Handles specific variations:
+    - Shoes: Size (UK 8, UK 9, UK 10)
+    - T-Shirts: Size (S, M, L, XL), Color (Black, Navy)
+    - Phones: Storage (128GB, 256GB), Color
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
+    name = models.CharField(max_length=100, help_text="e.g. Size UK 9 / Black 128GB")
+    additional_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    stock = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.product.name} ({self.name})"
 
 
 class Order(models.Model):
     class Status(models.TextChoices):
-        PENDING = 'PENDING', 'pending'
-        PAID = 'PAID', 'paid'
-        FAILED = 'FAILED', 'failed'
-        REFUNDED = 'REFUNDED', 'refunded'
+        PENDING = 'PENDING', 'Payment Pending'
+        PAID = 'PAID', 'Order Confirmed'
+        PROCESSING = 'PROCESSING', 'Processing by Vendor'
+        SHIPPED = 'SHIPPED', 'Shipped'
+        OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY', 'Out for Delivery'
+        DELIVERED = 'DELIVERED', 'Delivered'
+        CANCELLED = 'CANCELLED', 'Cancelled'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=25, choices=Status.choices, default=Status.PENDING)
+    
+    # Shipping & Delivery details
+    shipping_full_name = models.CharField(max_length=200)
+    shipping_phone = models.CharField(max_length=20)
+    shipping_address = models.TextField()
+    shipping_city = models.CharField(max_length=100)
+    shipping_pincode = models.CharField(max_length=15)
+    
+    # Tracking
+    tracking_carrier = models.CharField(max_length=100, blank=True)
+    tracking_number = models.CharField(max_length=100, blank=True)
 
-    #Razorpay GAteway Tracking
+    # Razorpay attributes
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
-    razorpay_signature = models.CharField(max_length=225, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=255, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.email} - {self.status}"
@@ -81,11 +131,58 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
-    mentorship_slot = models.ForeignKey(MentorshipSlot, on_delete=models.SET_NULL, null=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
+    vendor = models.ForeignKey(VendorProfile, on_delete=models.SET_NULL, null=True)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField(default=1)
 
     def __str__(self):
-        item_name = self.product.name if self.product else f"Slot #{self.mentorship_slot_id}"
-        return f"{self.quantity}x {item_name} @ ₹{self.unit_price}"
+        title = self.product.name if self.product else "Deleted Product"
+        return f"{self.quantity}x {title} @ ₹{self.unit_price}"
+
+
+class ProductReview(models.Model):
+    """Customer ratings and reviews."""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
+    title = models.CharField(max_length=150, blank=True)
+    comment = models.TextField()
+    is_verified_purchase = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('product', 'user')
+
+    def __str__(self):
+        return f"{self.rating}★ by {self.user.email} for {self.product.name}"
+
+
+class ComplaintTicket(models.Model):
+    """Customer complaints and suggestions handled by Administrator."""
+    class TicketType(models.TextChoices):
+        COMPLAINT = 'COMPLAINT', 'Complaint'
+        SUGGESTION = 'SUGGESTION', 'Suggestion'
+        RETURN_REQUEST = 'RETURN_REQUEST', 'Return/Refund Request'
+        DAMAGED_ITEM = 'DAMAGED_ITEM', 'Defective or Damaged Product'
+
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Open'
+        UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
+        RESOLVED = 'RESOLVED', 'Resolved'
+        CLOSED = 'CLOSED', 'Closed'
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='complaints')
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='complaints')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
+    ticket_type = models.CharField(max_length=25, choices=TicketType.choices, default=TicketType.COMPLAINT)
+    subject = models.CharField(max_length=255)
+    description = models.TextField()
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
+    admin_response = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Ticket #{self.id}: {self.subject} ({self.status})"
