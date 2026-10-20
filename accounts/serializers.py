@@ -97,3 +97,23 @@ class VendorRegistrationSerializer(serializers.Serializer):
                 is_approved=False,
             )
             return user
+
+# accounts/serializers.py
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'role',
+            'profile_picture',
+            'phone_number',
+            'address',
+            'city_district',
+            'state',
+            'pincode',
+        )
+        read_only_fields = ('id', 'email', 'role', 'profile_picture')

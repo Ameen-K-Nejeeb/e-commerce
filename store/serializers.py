@@ -39,9 +39,11 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         read_only_fields = ('user_email', 'is_verified_purchase', 'created_at')
 
 
+# store/serializers.py
+
 class ProductSerializer(serializers.ModelSerializer):
     vendor_name = serializers.ReadOnlyField(source='vendor.store_name')
-    vendor_user_id = serializers.ReadOnlyField(source='vendor.user.id')  
+    vendor_user_id = serializers.ReadOnlyField(source='vendor.user.id')
     category_name = serializers.ReadOnlyField(source='category.name')
     images = ProductImageSerializer(many=True, read_only=True)
     primary_image = serializers.SerializerMethodField()
@@ -55,7 +57,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'slug',
             'vendor',
             'vendor_name',
-            'vendor_user_id',       
+            'vendor_user_id',
             'category',
             'category_name',
             'brand',
@@ -66,12 +68,20 @@ class ProductSerializer(serializers.ModelSerializer):
             'stock',
             'description',
             'images',
+            'is_active',
             'primary_image',
             'variants',
             'average_rating',
             'created_at',
         )
-        read_only_fields = ('id', 'slug', 'effective_price', 'average_rating', 'created_at')
+        read_only_fields = (
+            'id',
+            'vendor',
+            'slug',
+            'effective_price',
+            'average_rating',
+            'created_at',
+        )
 
     def get_primary_image(self, obj):
         if hasattr(obj, 'images'):

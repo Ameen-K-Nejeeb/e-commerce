@@ -5,11 +5,12 @@ import razorpay
 from decimal import Decimal
 
 from django.conf import settings
-from rest_framework import viewsets, permissions, status, filters
+from rest_framework import viewsets, permissions, status, filters, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from django.shortcuts import get_object_or_404
 
 from accounts.permissions import IsAdminRole, IsVendorRole
 from .models import (
@@ -36,6 +37,14 @@ from .serializers import (
     CustomerOrderItemSerializer,
 )
 
+from django.utils.text import slugify
+
+
+
+
+
+
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -45,6 +54,46 @@ class CategoryViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
         return [IsAdminRole()]
+
+
+class VendorProductListCreateView(generics.ListCreateAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        vendor = VendorProfile.objects.filter(user=self.request.user).first()
+        if not vendor:
+            return Product.objects.none()
+        return Product.objects.filter(vendor=vendor).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        vendor = VendorProfile.objects.filter(user=self.request.user).first()
+        if not vendor:
+            raise PermissionDenied("You must have an approved vendor account to list products.")
+
+        # Generate unique slug
+        name = serializer.validated_data.get('name', 'product')
+        base_slug = slugify(name) or 'product'
+        slug = base_slug
+        counter = 1
+        while Product.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+
+        # Effective price calculation
+        base_price = serializer.validated_data.get('base_price')
+        discount_price = serializer.validated_data.get('discount_price')
+        effective_price = discount_price if discount_price else base_price
+
+        serializer.save(
+            vendor=vendor,
+            slug=slug,
+            effective_price=effective_price,
+        )
+
+
+        
+
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -503,3 +552,25 @@ class ProductVariantManageView(APIView):
 
         variant.delete()
         return Response({'message': 'Variant deleted successfully.'}, status=status.HTTP_200_OK)
+
+
+
+class VendorToggleProductStatusView(APIView):
+    """
+    PATCH /api/store/vendor/products/<int:pk>/toggle-status/
+    Toggles the is_active status of a product owned by the authenticated vendor.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        vendor = get_object_or_404(VendorProfile, user=request.user)
+        product = get_object_or_404(Product, pk=pk, vendor=vendor)
+
+        product.is_active = not product.is_active
+        product.save(update_fields=['is_active'])
+
+        return Response({
+            'id': product.id,
+            'is_active': product.is_active,
+            'message': f"Product is now {'Active' if product.is_active else 'Deactivated'}."
+        }, status=status.HTTP_200_OK)

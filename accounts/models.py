@@ -44,6 +44,13 @@ class User(AbstractUser):
     is_google_account = models.BooleanField(default=False)
     profile_picture = models.URLField(blank=True, null=True)
 
+    # Saved profile & delivery address details
+    phone_number = models.CharField(max_length=20, blank=True, default='')
+    address = models.TextField(blank=True, default='')
+    city_district = models.CharField(max_length=100, blank=True, default='')
+    state = models.CharField(max_length=100, blank=True, default='')
+    pincode = models.CharField(max_length=15, blank=True, default='')
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 

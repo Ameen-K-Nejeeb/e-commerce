@@ -17,8 +17,9 @@ from .serializers import (
     UserSerializer,
     RegisterSerializer,
     VendorRegistrationSerializer,
+    UserProfileSerializer,
 )
-
+from rest_framework import permissions, status
 
 class LoginView(TokenObtainPairView):
     """
@@ -84,17 +85,25 @@ class VendorRegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileView(generics.RetrieveUpdateAPIView):
+class UserProfileView(APIView):
     """
-    GET /api/auth/profile/
-    PUT/PATCH /api/auth/profile/
+    GET  /api/auth/profile/ -> Returns user profile and delivery address
+    PUT  /api/auth/profile/ -> Updates profile and delivery address
     """
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self):
-        return self.request.user
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def put(self, request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    
 
 class GoogleAuthView(APIView):
     """
@@ -155,3 +164,11 @@ class GoogleAuthView(APIView):
                 {'error': 'Invalid or expired Google token.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+# accounts/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import permissions, status
+from .serializers import UserProfileSerializer
+

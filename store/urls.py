@@ -11,7 +11,7 @@ from .views import (
     VerifyPaymentView,
     UserOrdersView,
 )
-from .views import VendorOrdersListView, VendorFulfillmentUpdateView, ProductImageManageView, SetPrimaryImageView, ProductVariantManageView
+from .views import VendorOrdersListView, VendorToggleProductStatusView, VendorFulfillmentUpdateView, ProductImageManageView, SetPrimaryImageView, ProductVariantManageView
 
 
 router = DefaultRouter()
@@ -31,6 +31,11 @@ urlpatterns = [
     path('vendors/me/', VendorProfileViewSet.as_view({'get': 'me'}), name='vendor-me'),
     path('vendor/orders/', VendorOrdersListView.as_view(), name='vendor_orders'),
     path('vendor/fulfillment/update/', VendorFulfillmentUpdateView.as_view(), name='vendor_fulfillment_update'),
+    path(
+        'vendor/products/<int:pk>/toggle-status/',
+        VendorToggleProductStatusView.as_view(),
+        name='vendor-product-toggle-status'
+    ),
 
     path('products/<int:product_id>/images/', ProductImageManageView.as_view(), name='product_images_add'),
     path('products/<int:product_id>/images/<int:image_id>/', ProductImageManageView.as_view(), name='product_images_delete'),
