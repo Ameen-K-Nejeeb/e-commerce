@@ -44,6 +44,7 @@ class ProductSerializer(serializers.ModelSerializer):
     vendor_user_id = serializers.ReadOnlyField(source='vendor.user.id')  
     category_name = serializers.ReadOnlyField(source='category.name')
     images = ProductImageSerializer(many=True, read_only=True)
+    primary_image = serializers.SerializerMethodField()
     variants = ProductVariantSerializer(many=True, read_only=True)
 
     class Meta:
@@ -65,11 +66,20 @@ class ProductSerializer(serializers.ModelSerializer):
             'stock',
             'description',
             'images',
+            'primary_image',
             'variants',
             'average_rating',
             'created_at',
         )
         read_only_fields = ('id', 'slug', 'effective_price', 'average_rating', 'created_at')
+
+    def get_primary_image(self, obj):
+        if hasattr(obj, 'images'):
+            primary = obj.images.filter(is_primary=True).first() or obj.images.first()
+            if primary:
+                return primary.image_url
+        return None
+
 
 class VendorProfileSerializer(serializers.ModelSerializer):
     user_email = serializers.ReadOnlyField(source='user.email')
@@ -87,10 +97,32 @@ class VendorProfileSerializer(serializers.ModelSerializer):
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     variant_name = serializers.ReadOnlyField(source='variant.name')
+    vendor_store = serializers.ReadOnlyField(source='vendor.store_name')
+    product_image = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ('id', 'product', 'product_name', 'variant', 'variant_name', 'unit_price', 'quantity')
+        fields = (
+            'id',
+            'product',
+            'product_name',
+            'product_image',
+            'variant',
+            'variant_name',
+            'vendor_store',
+            'unit_price',
+            'quantity',
+            'status',
+            'tracking_carrier',
+            'tracking_number',
+        )
+
+    def get_product_image(self, obj):
+        if obj.product:
+            img = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()
+            if img:
+                return img.image_url
+        return None
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -120,26 +152,64 @@ class ComplaintTicketSerializer(serializers.ModelSerializer):
         read_only_fields = ('user_email', 'status', 'admin_response', 'created_at')
 
 
-# store/serializers.py
-class VendorOrderItemSerializer(serializers.ModelSerializer):
+class CustomerOrderItemSerializer(serializers.ModelSerializer):
+    order_id = serializers.ReadOnlyField(source='order.id')
+    order_created_at = serializers.ReadOnlyField(source='order.created_at')
     product_name = serializers.ReadOnlyField(source='product.name')
     variant_name = serializers.ReadOnlyField(source='variant.name')
-    order_id = serializers.ReadOnlyField(source='order.id')
-    customer_email = serializers.ReadOnlyField(source='order.user.email')
-    shipping_full_name = serializers.ReadOnlyField(source='order.shipping_full_name')
-    shipping_phone = serializers.ReadOnlyField(source='order.shipping_phone')
-    shipping_address = serializers.ReadOnlyField(source='order.shipping_address')
-    shipping_city = serializers.ReadOnlyField(source='order.shipping_city')
-    shipping_pincode = serializers.ReadOnlyField(source='order.shipping_pincode')
-    order_created_at = serializers.ReadOnlyField(source='order.created_at')
-    order_status = serializers.ReadOnlyField(source='order.status')
+    vendor_store = serializers.ReadOnlyField(source='vendor.store_name')
+    product_image = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
         fields = (
             'id',
             'order_id',
-            'order_status',
+            'order_created_at',
+            'product',
+            'product_name',
+            'product_image',
+            'variant_name',
+            'vendor_store',
+            'unit_price',
+            'quantity',
+            'total_price',
+            'status',
+            'tracking_carrier',
+            'tracking_number',
+            'updated_at',
+        )
+
+    def get_product_image(self, obj):
+        if obj.product:
+            primary_img = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()
+            if primary_img:
+                return primary_img.image_url
+        return None
+
+    def get_total_price(self, obj):
+        return str(obj.unit_price * obj.quantity)
+
+
+class VendorOrderItemSerializer(serializers.ModelSerializer):
+    order_id = serializers.ReadOnlyField(source='order.id')
+    order_created_at = serializers.ReadOnlyField(source='order.created_at')
+    customer_email = serializers.ReadOnlyField(source='order.user.email')
+    shipping_full_name = serializers.ReadOnlyField(source='order.shipping_full_name')
+    shipping_phone = serializers.ReadOnlyField(source='order.shipping_phone')
+    shipping_address = serializers.ReadOnlyField(source='order.shipping_address')
+    shipping_city = serializers.ReadOnlyField(source='order.shipping_city')
+    shipping_pincode = serializers.ReadOnlyField(source='order.shipping_pincode')
+    product_name = serializers.ReadOnlyField(source='product.name')
+    variant_name = serializers.ReadOnlyField(source='variant.name')
+    product_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = (
+            'id',
+            'order_id',
             'order_created_at',
             'customer_email',
             'shipping_full_name',
@@ -149,9 +219,18 @@ class VendorOrderItemSerializer(serializers.ModelSerializer):
             'shipping_pincode',
             'product',
             'product_name',
-            'variant',
+            'product_image',
             'variant_name',
             'unit_price',
             'quantity',
+            'status',
+            'tracking_carrier',
+            'tracking_number',
         )
-        read_only_fields = fields
+
+    def get_product_image(self, obj):
+        if obj.product:
+            primary_img = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()
+            if primary_img:
+                return primary_img.image_url
+        return None

@@ -25,7 +25,8 @@ urlpatterns = [
     path('', include(router.urls)),
     path('checkout/create-order/', CreateCheckoutOrderView.as_view(), name='checkout_create_order'),
     path('checkout/verify-payment/', VerifyPaymentView.as_view(), name='checkout_verify_payment'),
-    path('user/orders/', UserOrdersView.as_view(), name='user_orders'),
+    path('user/orders/', UserOrdersView.as_view(), name='user-orders-list'),
+    path('orders/', UserOrdersView.as_view(), name='user-orders-alt'),
 
     path('vendors/me/', VendorProfileViewSet.as_view({'get': 'me'}), name='vendor-me'),
     path('vendor/orders/', VendorOrdersListView.as_view(), name='vendor_orders'),

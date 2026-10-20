@@ -95,11 +95,7 @@ class ProductVariant(models.Model):
 class Order(models.Model):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Payment Pending'
-        PAID = 'PAID', 'Order Confirmed'
-        PROCESSING = 'PROCESSING', 'Processing by Vendor'
-        SHIPPED = 'SHIPPED', 'Shipped'
-        OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY', 'Out for Delivery'
-        DELIVERED = 'DELIVERED', 'Delivered'
+        PAID = 'PAID', 'Payment Received / Confirmed'
         CANCELLED = 'CANCELLED', 'Cancelled'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
@@ -112,10 +108,6 @@ class Order(models.Model):
     shipping_address = models.TextField()
     shipping_city = models.CharField(max_length=100)
     shipping_pincode = models.CharField(max_length=15)
-    
-    # Tracking
-    tracking_carrier = models.CharField(max_length=100, blank=True)
-    tracking_number = models.CharField(max_length=100, blank=True)
 
     # Razorpay attributes
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
@@ -130,16 +122,37 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
+    class FulfillmentStatus(models.TextChoices):
+        CONFIRMED = 'CONFIRMED', 'Order Confirmed'
+        PROCESSING = 'PROCESSING', 'Processing by Vendor'
+        SHIPPED = 'SHIPPED', 'Handed over to Courier'
+        OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY', 'Out for Delivery'
+        DELIVERED = 'DELIVERED', 'Delivered'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
-    vendor = models.ForeignKey(VendorProfile, on_delete=models.SET_NULL, null=True)
+    vendor = models.ForeignKey(VendorProfile, on_delete=models.SET_NULL, null=True, related_name='sold_items')
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField(default=1)
 
+    # INDIVIDUAL PRODUCT FULFILLMENT TRACKING
+    status = models.CharField(
+        max_length=25, 
+        choices=FulfillmentStatus.choices, 
+        default=FulfillmentStatus.CONFIRMED
+    )
+    tracking_carrier = models.CharField(max_length=100, blank=True, default='')
+    tracking_number = models.CharField(max_length=100, blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
     def __str__(self):
         title = self.product.name if self.product else "Deleted Product"
-        return f"{self.quantity}x {title} @ ₹{self.unit_price}"
+        return f"{self.quantity}x {title} ({self.status}) @ ₹{self.unit_price}"
+
+
+
 
 
 class ProductReview(models.Model):
