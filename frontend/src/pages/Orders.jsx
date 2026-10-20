@@ -8,17 +8,17 @@ import {
   AlertCircle,
   MessageSquarePlus,
   Clock,
-  ChevronDown,
-  ChevronUp,
+  Store,
 } from "lucide-react";
 
 export default function Orders() {
-  const [orders, setOrders] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ticketModal, setTicketModal] = useState({
     open: false,
     orderId: null,
     productId: null,
+    productName: "",
   });
   const [ticketData, setTicketData] = useState({
     ticket_type: "COMPLAINT",
@@ -32,9 +32,12 @@ export default function Orders() {
   }, []);
 
   const fetchOrders = async () => {
+    setLoading(true);
     try {
-      const res = await api.get("store/user/orders/");
-      setOrders(res.data);
+      // Calls UserOrdersView which returns the flat list of items
+      const res = await api.get("store/orders/");
+      console.log("Customer orders received:", res.data);
+      setItems(res.data || []);
     } catch (err) {
       console.error("Error fetching orders:", err);
     } finally {
@@ -42,10 +45,10 @@ export default function Orders() {
     }
   };
 
-  const handleOpenTicket = (orderId, productId) => {
+  const handleOpenTicket = (orderId, productId, productName) => {
     setTicketStatus({ error: "", success: "" });
     setTicketData({ ticket_type: "COMPLAINT", subject: "", description: "" });
-    setTicketModal({ open: true, orderId, productId });
+    setTicketModal({ open: true, orderId, productId, productName });
   };
 
   const handleSubmitTicket = async (e) => {
@@ -65,8 +68,14 @@ export default function Orders() {
         success: "Complaint/Suggestion submitted successfully!",
       });
       setTimeout(
-        () => setTicketModal({ open: false, orderId: null, productId: null }),
-        1400,
+        () =>
+          setTicketModal({
+            open: false,
+            orderId: null,
+            productId: null,
+            productName: "",
+          }),
+        1400
       );
     } catch (err) {
       setTicketStatus({
@@ -76,25 +85,19 @@ export default function Orders() {
     }
   };
 
-  // Endpoint inside Orders.jsx for submitting a review
-  const submitReview = async (productId, rating, comment) => {
-    await api.post("store/reviews/", {
-      product_id: productId,
-      rating: rating,
-      comment: comment,
-    });
-    alert("Review submitted successfully!");
-  };
-
-  const getStatusBadge = (status) => {
+  const getItemStatusBadge = (status) => {
     const map = {
+      CONFIRMED: {
+        bg: "bg-blue-50 text-blue-700 border-blue-200",
+        label: "Confirmed",
+      },
       PAID: {
         bg: "bg-blue-50 text-blue-700 border-blue-200",
-        label: "Payment Confirmed",
+        label: "Confirmed",
       },
       PROCESSING: {
         bg: "bg-amber-50 text-amber-700 border-amber-200",
-        label: "Processing",
+        label: "Processing by Seller",
       },
       SHIPPED: {
         bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
@@ -115,11 +118,11 @@ export default function Orders() {
     };
     const s = map[status] || {
       bg: "bg-gray-100 text-gray-700 border-gray-200",
-      label: status,
+      label: status ? status.replace(/_/g, " ") : "Confirmed",
     };
     return (
       <span
-        className={`px-2.5 py-1 text-xs font-bold rounded-full border ${s.bg}`}
+        className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full border uppercase tracking-wider ${s.bg}`}
       >
         {s.label}
       </span>
@@ -135,132 +138,136 @@ export default function Orders() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">Your Orders</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900">Your Shipments</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Track parcel shipments and manage support requests.
+          Tracking {items.length} item{items.length === 1 ? "" : "s"} across independent seller dispatches.
         </p>
       </div>
 
-      {orders.length === 0 ? (
+      {items.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
           <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-gray-800">
-            No orders placed yet
-          </h2>
+          <h2 className="text-lg font-bold text-gray-800">No orders placed yet</h2>
           <p className="text-sm text-gray-400 mt-1">
-            Products you buy will show here along with live shipping statuses.
+            Products you buy will show here with separate seller dispatch tracking.
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {orders.map((order) => (
+        <div className="space-y-5">
+          {items.map((item) => (
             <div
-              key={order.id}
-              className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+              key={item.id}
+              className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden hover:border-gray-200 transition-all"
             >
-              <div className="bg-gray-50/70 p-4 sm:p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-wrap items-center gap-6 text-xs text-gray-500">
-                  <div>
-                    <span className="block font-bold uppercase tracking-wider text-gray-400">
-                      Order Placed
-                    </span>
-                    <span className="text-gray-800 font-medium">
-                      {new Date(order.created_at).toLocaleDateString([], {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
+              {/* Shipment Header */}
+              <div className="bg-gray-50/70 px-5 py-3.5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex flex-wrap items-center gap-4 text-gray-500">
+                  <span className="font-mono font-bold text-gray-900">
+                    Order #{item.order_id} • Item #{item.id}
+                  </span>
+                  <span>•</span>
+                  <span>
+                    Placed on:{" "}
+                    <strong className="text-gray-700">
+                      {item.order_created_at
+                        ? new Date(item.order_created_at).toLocaleDateString([], {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : "Recent"}
+                    </strong>
+                  </span>
+                  {item.vendor_store && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 font-semibold text-gray-700">
+                        <Store className="w-3.5 h-3.5 text-gray-400" />
+                        Seller: {item.vendor_store}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div>{getItemStatusBadge(item.status)}</div>
+              </div>
+
+              {/* Item Details */}
+              <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0 text-gray-400 overflow-hidden border border-gray-100">
+                    {item.product_image ? (
+                      <img
+                        src={item.product_image}
+                        alt={item.product_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Package className="w-8 h-8 text-gray-300" />
+                    )}
                   </div>
+
                   <div>
-                    <span className="block font-bold uppercase tracking-wider text-gray-400">
-                      Total
-                    </span>
-                    <span className="text-gray-900 font-bold">
-                      ₹{Number(order.total_amount).toFixed(2)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="block font-bold uppercase tracking-wider text-gray-400">
-                      Ship To
-                    </span>
-                    <span className="text-gray-800 font-medium">
-                      {order.shipping_full_name || "Customer"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="block font-bold uppercase tracking-wider text-gray-400">
-                      Order ID
-                    </span>
-                    <span className="text-gray-800 font-mono font-medium">
-                      #{order.id}
-                    </span>
+                    <h3 className="text-base font-bold text-gray-900">
+                      {item.product_name || "Marketplace Product"}
+                    </h3>
+                    {item.variant_name && (
+                      <p className="text-xs text-indigo-600 font-semibold mt-0.5">
+                        Variant: {item.variant_name}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Qty: {item.quantity} × ₹{Number(item.unit_price).toFixed(2)} ={" "}
+                      <strong className="text-gray-900 font-bold">
+                        ₹{(Number(item.unit_price) * item.quantity).toFixed(2)}
+                      </strong>
+                    </p>
                   </div>
                 </div>
 
+                {/* Report Issue Action */}
                 <div className="flex items-center gap-3">
-                  {getStatusBadge(order.status)}
+                  <button
+                    onClick={() =>
+                      handleOpenTicket(
+                        item.order_id,
+                        item.product,
+                        item.product_name
+                      )
+                    }
+                    className="text-xs font-semibold text-gray-600 hover:text-indigo-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+                  >
+                    <MessageSquarePlus className="w-3.5 h-3.5" />
+                    Report Issue
+                  </button>
                 </div>
               </div>
 
-              {/* Carrier & Tracking Bar */}
-              {(order.tracking_carrier || order.tracking_number) && (
-                <div className="bg-indigo-50/50 px-6 py-2.5 border-b border-indigo-100 flex items-center gap-2 text-xs text-indigo-900 font-medium">
-                  <Truck className="w-4 h-4 text-indigo-600" />
-                  <span>
-                    Carrier:{" "}
-                    <strong>{order.tracking_carrier || "Express"}</strong>
-                  </span>
-                  <span className="mx-1">•</span>
-                  <span>
-                    Tracking:{" "}
-                    <strong className="font-mono">
-                      {order.tracking_number}
-                    </strong>
-                  </span>
-                </div>
-              )}
-
-              {/* Items Section */}
-              <div className="p-4 sm:p-6 divide-y divide-gray-100">
-                {order.items?.map((item) => (
-                  <div
-                    key={item.id}
-                    className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 text-gray-400">
-                        <Package className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-900">
-                          {item.product_name || "Marketplace Item"}
-                        </h3>
-                        {item.variant_name && (
-                          <p className="text-xs text-indigo-600 font-medium">
-                            Option: {item.variant_name}
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          Qty: {item.quantity} × ₹
-                          {Number(item.unit_price).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleOpenTicket(order.id, item.product)}
-                        className="text-xs font-semibold text-gray-600 hover:text-indigo-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-                      >
-                        <MessageSquarePlus className="w-3.5 h-3.5" />
-                        Report Issue
-                      </button>
-                    </div>
+              {/* Individual Courier & Tracking Footer */}
+              <div className="bg-indigo-50/40 px-5 py-3 border-t border-indigo-50 flex flex-wrap items-center justify-between gap-2 text-xs">
+                {item.tracking_carrier || item.tracking_number ? (
+                  <div className="flex items-center gap-2 text-indigo-900 font-medium">
+                    <Truck className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                    <span>
+                      Courier:{" "}
+                      <strong>{item.tracking_carrier || "Standard Delivery"}</strong>
+                    </span>
+                    <span className="text-indigo-300">•</span>
+                    <span>
+                      AWB / Tracking:{" "}
+                      <strong className="font-mono text-gray-900">
+                        {item.tracking_number}
+                      </strong>
+                    </span>
                   </div>
-                ))}
+                ) : (
+                  <div className="flex items-center gap-1.5 text-gray-400 italic">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Awaiting seller fulfillment and courier dispatch</span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -270,24 +277,23 @@ export default function Orders() {
       {/* Complaint / Dispute Modal */}
       {ticketModal.open && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-100">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
             <h3 className="text-lg font-bold text-gray-900 mb-1">
-              Submit Issue or Suggestion
+              Submit Issue / Complaint
             </h3>
             <p className="text-xs text-gray-500 mb-4">
-              Direct message to administrator and vendor regarding Order #
-              {ticketModal.orderId}.
+              Regarding <strong>{ticketModal.productName}</strong> (Order #{ticketModal.orderId})
             </p>
 
             {ticketStatus.error && (
-              <div className="mb-3 p-3 text-xs bg-rose-50 text-rose-700 rounded-lg flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />{" "}
+              <div className="mb-3 p-3 text-xs bg-rose-50 text-rose-700 rounded-xl flex items-center gap-2 border border-rose-100">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {ticketStatus.error}
               </div>
             )}
             {ticketStatus.success && (
-              <div className="mb-3 p-3 text-xs bg-emerald-50 text-emerald-700 rounded-lg flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />{" "}
+              <div className="mb-3 p-3 text-xs bg-emerald-50 text-emerald-700 rounded-xl flex items-center gap-2 border border-emerald-100">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                 {ticketStatus.success}
               </div>
             )}
@@ -305,18 +311,12 @@ export default function Orders() {
                       ticket_type: e.target.value,
                     })
                   }
-                  className="w-full text-xs p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 >
                   <option value="COMPLAINT">Product Quality / Complaint</option>
-                  <option value="DAMAGED_ITEM">
-                    Defective or Damaged Item
-                  </option>
-                  <option value="RETURN_REQUEST">
-                    Return / Refund Request
-                  </option>
-                  <option value="SUGGESTION">
-                    Suggestion / Store Feedback
-                  </option>
+                  <option value="DAMAGED_ITEM">Defective or Damaged Item</option>
+                  <option value="RETURN_REQUEST">Return / Refund Request</option>
+                  <option value="SUGGESTION">Suggestion / Store Feedback</option>
                 </select>
               </div>
 
@@ -327,12 +327,12 @@ export default function Orders() {
                 <input
                   type="text"
                   required
-                  placeholder="Brief summary of the problem"
+                  placeholder="Brief summary of the issue"
                   value={ticketData.subject}
                   onChange={(e) =>
                     setTicketData({ ...ticketData, subject: e.target.value })
                   }
-                  className="w-full text-xs p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
@@ -351,7 +351,7 @@ export default function Orders() {
                       description: e.target.value,
                     })
                   }
-                  className="w-full text-xs p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
@@ -363,15 +363,16 @@ export default function Orders() {
                       open: false,
                       orderId: null,
                       productId: null,
+                      productName: "",
                     })
                   }
-                  className="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm"
+                  className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition-all"
                 >
                   Send Ticket
                 </button>
