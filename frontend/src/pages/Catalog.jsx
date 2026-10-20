@@ -1,6 +1,6 @@
 // src/pages/Catalog.jsx
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -32,6 +32,7 @@ export default function Catalog() {
 
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isVendor = user?.role === 'VENDOR';
 
   useEffect(() => {
@@ -83,6 +84,13 @@ export default function Catalog() {
   };
 
   const handleAddToCart = (product) => {
+    // 1. Guard check: redirect guests to login
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    // 2. Add to cart if logged in
     addToCart(product);
     setAddedIds((prev) => [...prev, product.id]);
     setTimeout(() => {
@@ -132,7 +140,7 @@ export default function Catalog() {
             placeholder="Search catalog..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-20 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+            className="w-full pl-10 pr-20 py-2.5 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-colors shadow-sm"
           />
           <button
             type="submit"
@@ -178,7 +186,7 @@ export default function Catalog() {
           <select
             value={ordering}
             onChange={(e) => setOrdering(e.target.value)}
-            className="bg-white border border-gray-200 text-xs font-medium text-gray-700 py-1.5 px-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+            className="bg-gray-50 focus:bg-white border border-gray-300 text-xs font-medium text-gray-700 py-1.5 px-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
           >
             <option value="-created_at">Newest First</option>
             <option value="base_price">Price: Low to High</option>
@@ -307,7 +315,7 @@ export default function Catalog() {
                       </p>
                     </div>
 
-                    {/* Action Button: Edit for Owner, Details for Other Vendors, Add to Cart for Customers */}
+                    {/* Action Button */}
                     {isMyProduct ? (
                       <Link
                         to={`/product/${product.id}`}

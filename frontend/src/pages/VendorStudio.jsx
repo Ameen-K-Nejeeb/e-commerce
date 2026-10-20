@@ -19,8 +19,6 @@ import {
   X,
 } from "lucide-react";
 
-
-
 export default function VendorStudio() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("catalog"); // 'catalog' | 'orders'
@@ -55,7 +53,6 @@ export default function VendorStudio() {
     fetchVendorStudioData();
   }, []);
 
-  // Inside src/pages/VendorStudio.jsx
   const fetchVendorStudioData = async () => {
     setLoading(true);
     try {
@@ -110,16 +107,16 @@ export default function VendorStudio() {
   };
 
   const handleToggleProductStatus = async (productId) => {
-  try {
-    const res = await api.patch(`store/vendor/products/${productId}/toggle-status/`);
-    const newStatus = res.data.is_active;
-    setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, is_active: newStatus } : p))
-    );
-  } catch (err) {
-    alert(err.response?.data?.detail || "Failed to update product status.");
-  }
-};
+    try {
+      const res = await api.patch(`store/vendor/products/${productId}/toggle-status/`);
+      const newStatus = res.data.is_active;
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, is_active: newStatus } : p))
+      );
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to update product status.");
+    }
+  };
 
   const handleOpenFulfillment = (item) => {
     setSelectedOrder(item);
@@ -134,13 +131,12 @@ export default function VendorStudio() {
     e.preventDefault();
     try {
       const res = await api.post("store/vendor/fulfillment/update/", {
-        item_id: selectedOrder.id, // Targets the specific item, not the parent order
+        item_id: selectedOrder.id,
         status: fulfillmentForm.status,
         tracking_carrier: fulfillmentForm.tracking_carrier,
         tracking_number: fulfillmentForm.tracking_number,
       });
 
-      // Update state locally
       setOrders((prev) =>
         prev.map((ord) =>
           ord.id === selectedOrder.id
@@ -238,8 +234,7 @@ export default function VendorStudio() {
                 : "text-gray-500 hover:text-gray-900"
             }`}
           >
-            <ClipboardList className="w-4 h-4" /> Incoming Orders (
-            {orders.length})
+            <ClipboardList className="w-4 h-4" /> Incoming Orders ({orders.length})
           </button>
         </div>
       </div>
@@ -294,7 +289,6 @@ export default function VendorStudio() {
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            {/* Product Thumbnail */}
                             <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center border border-gray-200/60 flex-shrink-0">
                               {imgUrl ? (
                                 <img
@@ -338,7 +332,6 @@ export default function VendorStudio() {
                           </span>
                         </td>
 
-                        {/* Status Badge */}
                         <td className="py-3 px-4 text-center">
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
@@ -356,7 +349,6 @@ export default function VendorStudio() {
                           </span>
                         </td>
 
-                        {/* Active / Deactivate Toggle Button */}
                         <td className="py-3 px-4 text-right">
                           <button
                             type="button"
@@ -414,9 +406,7 @@ export default function VendorStudio() {
                   key={item.id}
                   className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors"
                 >
-                  {/* Left side: Thumbnail + Details */}
                   <div className="flex items-start gap-4">
-                    {/* Order Item Image Thumbnail */}
                     <div className="w-14 h-14 bg-gray-100 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-200/60 flex-shrink-0">
                       {item.product_image ? (
                         <img
@@ -472,7 +462,6 @@ export default function VendorStudio() {
                         <span>Customer: {item.customer_email}</span>
                       </div>
 
-                      {/* Tracking info if already added */}
                       {(item.tracking_carrier || item.tracking_number) && (
                         <div className="flex items-center gap-2 pt-1 text-xs text-indigo-700 font-semibold">
                           <Truck className="w-3.5 h-3.5 text-indigo-500" />
@@ -488,7 +477,6 @@ export default function VendorStudio() {
                     </div>
                   </div>
 
-                  {/* Right side: Action Button */}
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <button
                       onClick={() => handleOpenFulfillment(item)}
@@ -533,7 +521,7 @@ export default function VendorStudio() {
                       status: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-colors"
                 >
                   <option value="PROCESSING">Processing / Packing</option>
                   <option value="SHIPPED">
@@ -558,7 +546,7 @@ export default function VendorStudio() {
                       tracking_carrier: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-colors"
                 />
               </div>
 
@@ -576,7 +564,7 @@ export default function VendorStudio() {
                       tracking_number: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-mono bg-gray-50 focus:bg-white transition-colors"
                 />
               </div>
 
@@ -620,7 +608,7 @@ export default function VendorStudio() {
                     setProductForm({ ...productForm, name: e.target.value })
                   }
                   placeholder="Sneakers, Analog Watch, T-Shirt..."
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
                 />
               </div>
 
@@ -638,7 +626,7 @@ export default function VendorStudio() {
                         category: e.target.value,
                       })
                     }
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
                   >
                     <option value="">Select Category</option>
                     {categories.map((c) => (
@@ -660,7 +648,7 @@ export default function VendorStudio() {
                       setProductForm({ ...productForm, sku: e.target.value })
                     }
                     placeholder="PROD-001"
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -681,7 +669,7 @@ export default function VendorStudio() {
                         base_price: e.target.value,
                       })
                     }
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
                   />
                 </div>
                 <div>
@@ -698,7 +686,7 @@ export default function VendorStudio() {
                         discount_price: e.target.value,
                       })
                     }
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
                   />
                 </div>
                 <div>
@@ -712,7 +700,7 @@ export default function VendorStudio() {
                     onChange={(e) =>
                       setProductForm({ ...productForm, stock: e.target.value })
                     }
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -728,7 +716,7 @@ export default function VendorStudio() {
                     setProductForm({ ...productForm, brand: e.target.value })
                   }
                   placeholder="Brand"
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
                 />
               </div>
 
@@ -746,7 +734,7 @@ export default function VendorStudio() {
                       description: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
                 />
               </div>
 

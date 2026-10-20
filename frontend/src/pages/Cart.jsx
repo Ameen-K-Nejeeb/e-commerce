@@ -356,7 +356,7 @@ export default function Cart() {
                         value={shipping.full_name}
                         onChange={(e) => setShipping({ ...shipping, full_name: e.target.value })}
                         placeholder="Full Name"
-                        className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
                       />
                     </div>
 
@@ -368,7 +368,7 @@ export default function Cart() {
                         value={shipping.phone}
                         onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
                         placeholder="10-digit mobile number"
-                        className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
                       />
                     </div>
 
@@ -380,7 +380,7 @@ export default function Cart() {
                         value={shipping.address}
                         onChange={(e) => setShipping({ ...shipping, address: e.target.value })}
                         placeholder="House/Flat No, Street, Locality"
-                        className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
                       />
                     </div>
 
@@ -392,7 +392,7 @@ export default function Cart() {
                         value={shipping.city}
                         onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
                         placeholder="e.g. Idukki, Kochi"
-                        className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
                       />
                     </div>
 
@@ -404,7 +404,7 @@ export default function Cart() {
                         value={shipping.pincode}
                         onChange={(e) => setShipping({ ...shipping, pincode: e.target.value })}
                         placeholder="6-digit PIN code"
-                        className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium font-mono placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
                       />
                     </div>
                   </div>

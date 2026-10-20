@@ -1,6 +1,6 @@
 // src/pages/ProductDetail.jsx
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -26,6 +26,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
@@ -180,7 +181,15 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
+    // 1. Guard check: redirect unauthenticated users to login
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
     if (!product) return;
+
+    // 2. Add product to cart context
     const itemToAdd = {
       ...product,
       variant: selectedVariant,
@@ -216,7 +225,7 @@ export default function ProductDetail() {
     );
   }
 
-  // --- OWNERSHIP EVALUATION (Executed safely after product has loaded) ---
+  // --- OWNERSHIP EVALUATION ---
   const isVendor = user?.role === "VENDOR";
   const isOwner =
     isVendor &&
@@ -292,7 +301,7 @@ export default function ProductDetail() {
                   placeholder="Paste image URL (https://...)"
                   value={newImageUrl}
                   onChange={(e) => setNewImageUrl(e.target.value)}
-                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="flex-1 px-3 py-1.5 text-xs bg-gray-50 text-gray-900 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
                 />
                 <button
                   type="submit"
@@ -373,7 +382,7 @@ export default function ProductDetail() {
                   onChange={(e) =>
                     setEditForm({ ...editForm, name: e.target.value })
                   }
-                  className="w-full p-2 border border-gray-300 rounded-xl text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2 bg-gray-50 text-gray-900 border border-gray-300 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
                 />
               </div>
             ) : (
@@ -394,7 +403,11 @@ export default function ProductDetail() {
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${i < Math.round(product.average_rating || 0) ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
+                    className={`w-4 h-4 ${
+                      i < Math.round(product.average_rating || 0)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-gray-200"
+                    }`}
                   />
                 ))}
               </div>
@@ -420,7 +433,7 @@ export default function ProductDetail() {
                     onChange={(e) =>
                       setEditForm({ ...editForm, base_price: e.target.value })
                     }
-                    className="w-full p-2 text-xs border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2 text-xs bg-gray-50 text-gray-900 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
                   />
                 </div>
                 <div>
@@ -437,7 +450,7 @@ export default function ProductDetail() {
                         discount_price: e.target.value,
                       })
                     }
-                    className="w-full p-2 text-xs border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2 text-xs bg-gray-50 text-gray-900 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
                   />
                 </div>
                 <div>
@@ -450,7 +463,7 @@ export default function ProductDetail() {
                     onChange={(e) =>
                       setEditForm({ ...editForm, stock: e.target.value })
                     }
-                    className="w-full p-2 text-xs border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2 text-xs bg-gray-50 text-gray-900 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -486,7 +499,6 @@ export default function ProductDetail() {
                   Variants (Sizes, Colors, Storage)
                 </h4>
 
-                {/* Add Variant Form */}
                 <form
                   onSubmit={handleAddVariant}
                   className="grid grid-cols-1 sm:grid-cols-4 gap-2"
@@ -499,7 +511,7 @@ export default function ProductDetail() {
                     onChange={(e) =>
                       setVariantForm({ ...variantForm, name: e.target.value })
                     }
-                    className="sm:col-span-2 px-3 py-1.5 text-xs bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="sm:col-span-2 px-3 py-1.5 text-xs bg-gray-50 text-gray-900 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
                   />
                   <input
                     type="number"
@@ -512,7 +524,7 @@ export default function ProductDetail() {
                         additional_price: e.target.value,
                       })
                     }
-                    className="px-2 py-1.5 text-xs bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="px-2 py-1.5 text-xs bg-gray-50 text-gray-900 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
                   />
                   <button
                     type="submit"
@@ -523,7 +535,6 @@ export default function ProductDetail() {
                   </button>
                 </form>
 
-                {/* Variant List Table */}
                 {product.variants?.length > 0 && (
                   <div className="divide-y divide-gray-200 pt-2">
                     {product.variants.map((v) => (
@@ -558,7 +569,7 @@ export default function ProductDetail() {
                 )}
               </div>
             ) : (
-              /* VARIANT SELECTOR (Read-only for other vendors, selectable for customers) */
+              /* VARIANT SELECTOR */
               product.variants?.length > 0 && (
                 <div className="mt-6">
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
@@ -575,7 +586,11 @@ export default function ProductDetail() {
                           selectedVariant?.id === v.id
                             ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm"
                             : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                        } ${isOtherVendor ? "cursor-default opacity-80 hover:border-gray-200" : ""}`}
+                        } ${
+                          isOtherVendor
+                            ? "cursor-default opacity-80 hover:border-gray-200"
+                            : ""
+                        }`}
                       >
                         {v.name}{" "}
                         {Number(v.additional_price) > 0 &&
@@ -599,7 +614,7 @@ export default function ProductDetail() {
                   onChange={(e) =>
                     setEditForm({ ...editForm, description: e.target.value })
                   }
-                  className="w-full p-2.5 border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2.5 bg-gray-50 text-gray-900 border border-gray-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-colors"
                 />
               ) : (
                 <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
@@ -609,10 +624,9 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Action Footer: Owner Vendor vs Other Vendor vs Customer */}
+          {/* Action Footer */}
           <div className="mt-8 pt-6 border-t border-gray-100 space-y-4">
             {isOwner ? (
-              /* 1. OWNER VENDOR: Edit Controls */
               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center justify-between">
                 <div>
                   <h4 className="text-xs font-bold text-emerald-900">
@@ -647,7 +661,6 @@ export default function ProductDetail() {
                 )}
               </div>
             ) : isOtherVendor ? (
-              /* 2. OTHER VENDOR: Read-Only Store Notice */
               <div className="bg-gray-50 border border-gray-200 p-4 rounded-2xl text-center">
                 <p className="text-xs font-semibold text-gray-700">
                   Listed by <strong>{product.vendor_name}</strong>
@@ -658,7 +671,6 @@ export default function ProductDetail() {
                 </p>
               </div>
             ) : (
-              /* 3. CUSTOMER / GUEST: Add To Cart */
               <>
                 <button
                   onClick={handleAddToCart}
