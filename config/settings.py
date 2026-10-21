@@ -13,15 +13,12 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 
-
 import os
 import dj_database_url
 from dotenv import load_dotenv
 
 # Load environment variables from the .env file
 load_dotenv()
-
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -119,8 +116,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-# config/settings.py
-
 DATABASES = {
     'default': dj_database_url.parse(
         os.environ.get('DATABASE_URL'),
@@ -175,8 +170,6 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
-
-
 
 
 # Payment gateway settings

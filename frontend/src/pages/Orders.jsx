@@ -10,6 +10,7 @@ import {
   Clock,
   Store,
   Star,
+  Sparkles
 } from "lucide-react";
 import ReviewModal from "../components/ReviewModal";
 
@@ -31,7 +32,7 @@ export default function Orders() {
   });
   const [ticketStatus, setTicketStatus] = useState({ error: "", success: "" });
 
-  // Review Modal State (Added existingReview)
+  // Review Modal State
   const [reviewModalState, setReviewModalState] = useState({
     isOpen: false,
     productId: null,
@@ -47,7 +48,6 @@ export default function Orders() {
     setLoading(true);
     try {
       const res = await api.get("store/orders/");
-      console.log("Customer orders received:", res.data);
       setItems(res.data || []);
     } catch (err) {
       console.error("Error fetching orders:", err);
@@ -77,7 +77,7 @@ export default function Orders() {
       });
       setTicketStatus({
         error: "",
-        success: "Complaint/Suggestion submitted successfully!",
+        success: "Inquiry submitted securely to the artisan.",
       });
       setTimeout(
         () =>
@@ -91,7 +91,7 @@ export default function Orders() {
       );
     } catch (err) {
       setTicketStatus({
-        error: "Failed to submit ticket. Please check fields.",
+        error: "Failed to dispatch inquiry. Please check your details.",
         success: "",
       });
     }
@@ -103,26 +103,25 @@ export default function Orders() {
   };
 
   const handleReviewSuccess = () => {
-    // Re-fetch orders so the UI instantly shows the new rating and "Edit" button
     fetchOrders(); 
   };
 
   const getItemStatusBadge = (status) => {
     const map = {
-      CONFIRMED: { bg: "bg-blue-50 text-blue-700 border-blue-200", label: "Confirmed" },
-      PAID: { bg: "bg-blue-50 text-blue-700 border-blue-200", label: "Confirmed / Paid" },
-      PROCESSING: { bg: "bg-amber-50 text-amber-700 border-amber-200", label: "Processing by Seller" },
-      SHIPPED: { bg: "bg-indigo-50 text-indigo-700 border-indigo-200", label: "Shipped" },
-      OUT_FOR_DELIVERY: { bg: "bg-purple-50 text-purple-700 border-purple-200", label: "Out for Delivery" },
-      DELIVERED: { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", label: "Delivered" },
-      CANCELLED: { bg: "bg-rose-50 text-rose-700 border-rose-200", label: "Cancelled" },
+      CONFIRMED: { bg: "bg-stone-100 text-stone-700 border-stone-200", label: "Confirmed" },
+      PAID: { bg: "bg-amber-50 text-amber-800 border-amber-200", label: "Paid Securely" },
+      PROCESSING: { bg: "bg-orange-50 text-orange-800 border-orange-200", label: "Artisan Processing" },
+      SHIPPED: { bg: "bg-amber-100 text-amber-900 border-amber-300", label: "In Transit" },
+      OUT_FOR_DELIVERY: { bg: "bg-emerald-50 text-emerald-800 border-emerald-200", label: "Arriving Today" },
+      DELIVERED: { bg: "bg-emerald-100 text-emerald-900 border-emerald-300", label: "Secured" },
+      CANCELLED: { bg: "bg-rose-50 text-rose-800 border-rose-200", label: "Voided" },
     };
     const s = map[status] || {
-      bg: "bg-gray-100 text-gray-700 border-gray-200",
+      bg: "bg-stone-100 text-stone-700 border-stone-200",
       label: status ? status.replace(/_/g, " ") : "Confirmed",
     };
     return (
-      <span className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full border uppercase tracking-wider ${s.bg}`}>
+      <span className={`px-3 py-1 text-[9px] font-black rounded-full border uppercase tracking-widest ${s.bg}`}>
         {s.label}
       </span>
     );
@@ -130,46 +129,47 @@ export default function Orders() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 flex justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="max-w-7xl mx-auto px-4 py-32 flex justify-center">
+        <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">Your Shipments</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Tracking {items.length} item{items.length === 1 ? "" : "s"} across independent seller dispatches.
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-[#faf8f5]/40 min-h-screen">
+      <div className="mb-10 border-b border-amber-100/60 pb-6">
+        <h1 className="text-3xl sm:text-4xl font-serif font-black text-stone-900">Your Acquisitions</h1>
+        <p className="text-xs uppercase tracking-widest font-bold text-amber-700/60 mt-2 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5" />
+          Tracking {items.length} Fine Piece{items.length === 1 ? "" : "s"}
         </p>
       </div>
 
       {items.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
-          <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-gray-800">No orders placed yet</h2>
-          <p className="text-sm text-gray-400 mt-1">
-            Products you buy will show here with separate seller dispatch tracking.
+        <div className="bg-white rounded-3xl border border-amber-100/60 p-16 text-center shadow-xl shadow-amber-900/5">
+          <Package className="w-12 h-12 text-amber-200 mx-auto mb-4" />
+          <h2 className="text-xl font-serif font-bold text-stone-800">No pieces acquired yet</h2>
+          <p className="text-sm text-stone-500 mt-1 font-medium">
+            Fine jewelry you purchase will appear here with secure transit tracking.
           </p>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-6">
           {items.map((item) => (
             <div
               key={item.id}
-              className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden hover:border-gray-200 transition-all"
+              className="bg-white border border-amber-100/60 rounded-[2rem] shadow-sm hover:shadow-lg hover:shadow-amber-900/5 overflow-hidden transition-all"
             >
               {/* Shipment Header */}
-              <div className="bg-gray-50/70 px-5 py-3.5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex flex-wrap items-center gap-4 text-gray-500">
-                  <span className="font-mono font-bold text-gray-900">
-                    Order #{item.order_id} Item #{item.id}
+              <div className="bg-stone-50/50 px-6 py-4 border-b border-amber-100/60 flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div className="flex flex-wrap items-center gap-4 text-stone-500 font-medium">
+                  <span className="font-mono font-bold text-stone-900 tracking-wider">
+                    Ref #{item.order_id}-{item.id}
                   </span>
-                  <span>•</span>
+                  <span className="text-amber-200">•</span>
                   <span>
-                    Placed on:{" "}
-                    <strong className="text-gray-700">
+                    Acquired:{" "}
+                    <strong className="text-stone-800">
                       {item.order_created_at
                         ? new Date(item.order_created_at).toLocaleDateString([], {
                             month: "short",
@@ -181,10 +181,9 @@ export default function Orders() {
                   </span>
                   {item.vendor_store && (
                     <>
-                      <span>•</span>
-                      <span className="flex items-center gap-1 font-semibold text-gray-700">
-                        <Store className="w-3.5 h-3.5 text-gray-400" />
-                        Seller: {item.vendor_store}
+                      <span className="text-amber-200">•</span>
+                      <span className="flex items-center gap-1.5 font-bold text-amber-800 uppercase tracking-wider text-[10px]">
+                        <Store className="w-3.5 h-3.5" /> {item.vendor_store}
                       </span>
                     </>
                   )}
@@ -194,9 +193,9 @@ export default function Orders() {
               </div>
 
               {/* Item Details */}
-              <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0 text-gray-400 overflow-hidden border border-gray-100">
+              <div className="p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-start gap-5">
+                  <div className="w-20 h-20 bg-[#fcfaf7] rounded-2xl flex items-center justify-center flex-shrink-0 text-stone-300 overflow-hidden border border-amber-100/50 shadow-inner">
                     {item.product_image ? (
                       <img
                         src={item.product_image}
@@ -204,22 +203,22 @@ export default function Orders() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Package className="w-8 h-8 text-gray-300" />
+                      <Package className="w-8 h-8 text-amber-200" />
                     )}
                   </div>
 
                   <div>
-                    <h3 className="text-base font-bold text-gray-900">
-                      {item.product_name || "Marketplace Product"}
+                    <h3 className="text-lg font-serif font-bold text-stone-900">
+                      {item.product_name || "Exclusive Piece"}
                     </h3>
                     {item.variant_name && (
-                      <p className="text-xs text-indigo-600 font-semibold mt-0.5">
-                        Variant: {item.variant_name}
+                      <p className="text-[11px] uppercase tracking-widest text-amber-700 font-bold mt-1">
+                        Spec: {item.variant_name}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-sm text-stone-500 mt-2 font-medium">
                       Qty: {item.quantity} × ₹{Number(item.unit_price).toFixed(2)} ={" "}
-                      <strong className="text-gray-900 font-bold">
+                      <strong className="text-stone-900 font-black">
                         ₹{(Number(item.unit_price) * item.quantity).toFixed(2)}
                       </strong>
                     </p>
@@ -227,74 +226,71 @@ export default function Orders() {
                 </div>
 
                 {/* Actions: Report Issue & Rate Product */}
-                    <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => handleOpenTicket(item.order_id, item.product, item.product_name)}
-                        className="text-xs font-semibold text-gray-700 hover:text-indigo-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
-                    >
-                        <MessageSquarePlus className="w-3.5 h-3.5" />
-                        Report Issue
-                    </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleOpenTicket(item.order_id, item.product, item.product_name)}
+                    className="text-[10px] uppercase tracking-widest font-bold text-stone-500 hover:text-amber-700 bg-stone-50 hover:bg-amber-50 border border-stone-200 px-4 py-2.5 rounded-full transition-colors flex items-center gap-1.5 shadow-sm"
+                  >
+                    <MessageSquarePlus className="w-3.5 h-3.5" />
+                    Support
+                  </button>
 
-                    {/* Show Stars if Reviewed, otherwise show Rate Product */}
-                    {(item.status === "DELIVERED" || item.status === "PAID") && (
-                        item.user_review ? (
-                        <div className="flex items-center gap-3">
-                            {/* 1. Show the beautiful "Reviewed" Star Badge */}
-                            <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200 shadow-sm">
-                            <span className="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider">Reviewed</span>
-                            <div className="flex items-center">
-                                {[...Array(5)].map((_, i) => (
-                                <Star
-                                    key={i}
-                                    className={`w-3.5 h-3.5 ${
-                                    i < item.user_review.rating
-                                        ? "fill-amber-400 text-amber-400"
-                                        : "text-amber-200"
-                                    }`}
-                                />
-                                ))}
-                            </div>
-                            </div>
-                            
-                            {/* 2. Smaller Edit Button */}
-                            <button
-                            onClick={() => openReviewModal(item.product, item.product_name, item.user_review)}
-                            className="text-xs font-bold text-gray-400 hover:text-indigo-600 underline transition-colors"
-                            >
-                            Edit
-                            </button>
+                  {/* Show Stars if Reviewed, otherwise show Rate Product */}
+                  {(item.status === "DELIVERED" || item.status === "PAID") && (
+                    item.user_review ? (
+                      <div className="flex items-center gap-2 bg-amber-50 pl-3 pr-1 py-1 rounded-full border border-amber-200/60 shadow-sm">
+                        <span className="text-[9px] font-black text-amber-800 uppercase tracking-widest">
+                          Reviewed
+                        </span>
+                        <div className="flex items-center mx-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3 h-3 ${
+                                i < item.user_review.rating
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-amber-200"
+                              }`}
+                            />
+                          ))}
                         </div>
-                        ) : (
                         <button
-                            onClick={() => openReviewModal(item.product, item.product_name)}
-                            className="text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+                          onClick={() => openReviewModal(item.product, item.product_name, item.user_review)}
+                          className="text-[9px] uppercase tracking-widest font-black text-stone-500 hover:text-amber-800 bg-white border border-amber-200 px-3 py-1.5 rounded-full shadow-sm"
                         >
-                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            Rate Product
+                          Edit
                         </button>
-                        )
-                    )}
-                    </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => openReviewModal(item.product, item.product_name)}
+                        className="text-[10px] uppercase tracking-widest font-bold text-white bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 px-4 py-2.5 rounded-full transition-all flex items-center gap-1.5 shadow-md shadow-amber-600/20"
+                      >
+                        <Star className="w-3.5 h-3.5 fill-amber-200 text-amber-200" />
+                        Appraise
+                      </button>
+                    )
+                  )}
+                </div>
               </div>
 
               {/* Individual Courier & Tracking Footer */}
-              <div className="bg-indigo-50/40 px-5 py-3 border-t border-indigo-50 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="bg-stone-50/60 px-6 py-4 border-t border-amber-100/60 flex flex-wrap items-center justify-between gap-3 text-xs">
                 {item.tracking_carrier || item.tracking_number ? (
-                  <div className="flex items-center gap-2 text-indigo-900 font-medium">
-                    <Truck className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-amber-900 font-bold uppercase tracking-wider text-[10px]">
+                    <Truck className="w-4 h-4 text-amber-600 flex-shrink-0" />
                     <span>
-                      Courier: <strong>{item.tracking_carrier || "Standard Delivery"}</strong>
+                      Carrier: <strong className="text-stone-800">{item.tracking_carrier || "Insured Transit"}</strong>
                     </span>
-                    <span className="text-indigo-300">•</span>
+                    <span className="text-amber-200 mx-1">•</span>
                     <span>
-                      AWB / Tracking: <strong className="font-mono text-gray-900">{item.tracking_number}</strong>
+                      AWB: <strong className="font-mono text-stone-900 tracking-widest">{item.tracking_number}</strong>
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-gray-400 italic">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Awaiting seller fulfillment and courier dispatch</span>
+                  <div className="flex items-center gap-1.5 text-stone-400 font-medium uppercase tracking-widest text-[9px]">
+                    <Clock className="w-3 h-3" />
+                    <span>Awaiting Artisan Dispatch</span>
                   </div>
                 )}
               </div>
@@ -305,81 +301,80 @@ export default function Orders() {
 
       {/* Complaint / Dispute Modal */}
       {ticketModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
-            {/* Modal content remains identical */}
-            <h3 className="text-lg font-bold text-gray-900 mb-1">Submit Issue / Complaint</h3>
-            <p className="text-xs text-gray-500 mb-4">
-              Regarding <strong>{ticketModal.productName}</strong> (Order #{ticketModal.orderId})
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-amber-100/60">
+            <h3 className="text-xl font-serif font-black text-stone-900 mb-1">Support Inquiry</h3>
+            <p className="text-xs text-stone-500 mb-6 font-medium">
+              Regarding <strong>{ticketModal.productName}</strong> (Ref #{ticketModal.orderId})
             </p>
 
             {ticketStatus.error && (
-              <div className="mb-3 p-3 text-xs bg-rose-50 text-rose-700 rounded-xl flex items-center gap-2 border border-rose-100">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="mb-4 p-3.5 text-xs bg-rose-50 text-rose-800 rounded-xl flex items-center gap-2 border border-rose-200 font-bold">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 {ticketStatus.error}
               </div>
             )}
             {ticketStatus.success && (
-              <div className="mb-3 p-3 text-xs bg-emerald-50 text-emerald-700 rounded-xl flex items-center gap-2 border border-emerald-100">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <div className="mb-4 p-3.5 text-xs bg-emerald-50 text-emerald-800 rounded-xl flex items-center gap-2 border border-emerald-200 font-bold">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
                 {ticketStatus.success}
               </div>
             )}
 
-            <form onSubmit={handleSubmitTicket} className="space-y-3">
+            <form onSubmit={handleSubmitTicket} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Issue Type</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Inquiry Type</label>
                 <select
                   value={ticketData.ticket_type}
                   onChange={(e) => setTicketData({ ...ticketData, ticket_type: e.target.value })}
-                  className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  className="w-full text-sm p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 text-stone-800 transition-colors"
                 >
-                  <option value="COMPLAINT">Product Quality / Complaint</option>
-                  <option value="DAMAGED_ITEM">Defective or Damaged Item</option>
-                  <option value="RETURN_REQUEST">Return / Refund Request</option>
-                  <option value="SUGGESTION">Suggestion / Store Feedback</option>
+                  <option value="COMPLAINT">Quality / Authenticity Concern</option>
+                  <option value="DAMAGED_ITEM">Damaged in Transit</option>
+                  <option value="RETURN_REQUEST">Return / Secure Refund</option>
+                  <option value="SUGGESTION">General Support</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Subject</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Subject</label>
                 <input
                   type="text"
                   required
-                  placeholder="Brief summary of the issue"
+                  placeholder="Brief summary..."
                   value={ticketData.subject}
                   onChange={(e) => setTicketData({ ...ticketData, subject: e.target.value })}
-                  className="w-full text-xs p-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm p-3 bg-stone-50 text-stone-900 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 transition-colors placeholder:text-stone-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Description</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Details</label>
                 <textarea
                   rows={4}
                   required
-                  placeholder="Provide full details so we can investigate and assist you..."
+                  placeholder="Please provide full details so the artisan can assist you..."
                   value={ticketData.description}
                   onChange={(e) => setTicketData({ ...ticketData, description: e.target.value })}
-                  className="w-full text-xs p-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm p-3 bg-stone-50 text-stone-900 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 transition-colors placeholder:text-stone-400"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-amber-50">
                 <button
                   type="button"
                   onClick={() =>
                     setTicketModal({ open: false, orderId: null, productId: null, productName: "" })
                   }
-                  className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                  className="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-stone-500 hover:bg-stone-100 rounded-full transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition-all"
+                  className="px-6 py-2.5 text-xs font-black uppercase tracking-widest bg-stone-900 hover:bg-stone-800 text-white rounded-full shadow-md transition-all"
                 >
-                  Send Ticket
+                  Dispatch
                 </button>
               </div>
             </form>
@@ -392,7 +387,7 @@ export default function Orders() {
         isOpen={reviewModalState.isOpen}
         productId={reviewModalState.productId}
         productName={reviewModalState.productName}
-        existingReview={reviewModalState.existingReview} // Passing it down
+        existingReview={reviewModalState.existingReview}
         onClose={() => setReviewModalState({ isOpen: false, productId: null, productName: "", existingReview: null })}
         onReviewSuccess={handleReviewSuccess}
       />

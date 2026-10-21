@@ -12,6 +12,9 @@ import Orders from './pages/Orders';
 import VendorStudio from './pages/VendorStudio';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import About from './pages/About';
+import Footer from './components/Footer';
+
 export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -20,6 +23,7 @@ export default function App() {
         <Routes>
           {/* Public Marketplace Views */}
           <Route path="/" element={<Catalog />} />
+          <Route path="/about" element={<About />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/login" element={<Login />} />
@@ -37,6 +41,7 @@ export default function App() {
           </Route>
         </Routes>
       </main>
+      <Footer/>
     </div>
   );
 }
