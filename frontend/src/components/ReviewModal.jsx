@@ -1,101 +1,123 @@
 // src/components/ReviewModal.jsx
-import React, { useState } from 'react';
-import { Star, X } from 'lucide-react';
-import api from '../api/axios';
+import React, { useState, useEffect } from "react";
+import { Star, X, Sparkles } from "lucide-react";
+import api from "../api/axios";
 
-export default function ReviewModal({ isOpen, onClose, productId, productName, onReviewSuccess }) {
+export default function ReviewModal({ isOpen, productId, productName, existingReview, onClose, onReviewSuccess }) {
   const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
   const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      if (existingReview) {
+        setRating(existingReview.rating);
+        setComment(existingReview.comment);
+      } else {
+        setRating(0);
+        setComment("");
+      }
+      setError("");
+    }
+  }, [isOpen, existingReview]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     if (rating === 0) {
       setError("Please select a star rating.");
       return;
     }
-
     setLoading(true);
     try {
-      await api.post(`store/products/${productId}/reviews/`, {
-        rating,
-        comment
-      });
-      onReviewSuccess(); // Notify parent to show a success message
-      onClose(); // Close modal
+      await api.post(`store/products/${productId}/reviews/`, { rating, comment });
+      onReviewSuccess();
+      onClose(); 
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to submit review. You may have already reviewed this.");
+      setError(err.response?.data?.error || "Failed to submit review. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in duration-200">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
-          <h3 className="font-bold text-gray-900 text-sm">Rate & Review</h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-rose-600 transition-colors">
+    <div className="fixed inset-0 z-[70] bg-[#080808]/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#111111] rounded-[2rem] max-w-md w-full p-8 shadow-2xl border border-[#C9A96A]/30">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-serif font-black text-[#C9A96A] flex items-center gap-2.5">
+            <Sparkles className="w-5 h-5 text-[#C9A96A]" />
+            {existingReview ? "Update Review" : "Review Piece"}
+          </h3>
+          <button onClick={onClose} className="p-2 text-[#F5E6D3]/50 hover:text-[#C9A96A] bg-black rounded-full transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
+        
+        <p className="text-xs text-[#F5E6D3]/70 mb-6 font-medium">
+          How was your experience with <strong>{productName}</strong>?
+        </p>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5">
-          <p className="text-xs text-gray-500 mb-4">
-            How was your experience with <span className="font-bold text-gray-800">{productName}</span>?
-          </p>
+        {error && (
+          <div className="mb-5 p-3.5 text-xs bg-red-900/30 text-red-400 rounded-xl border border-red-500/30 font-bold tracking-wide">
+            {error}
+          </div>
+        )}
 
-          {error && <div className="mb-4 text-xs font-bold text-rose-600 bg-rose-50 p-2 rounded-lg">{error}</div>}
-
-          {/* Star Selector */}
-          <div className="flex items-center justify-center gap-1.5 mb-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex justify-center gap-2 mb-2 bg-[#080808] py-5 rounded-2xl border border-[#C9A96A]/10">
             {[1, 2, 3, 4, 5].map((star) => (
-              <Star
+              <button
                 key={star}
-                onClick={() => setRating(star)}
+                type="button"
+                className="p-1 focus:outline-none transition-transform hover:scale-110"
                 onMouseEnter={() => setHoverRating(star)}
                 onMouseLeave={() => setHoverRating(0)}
-                className={`w-8 h-8 cursor-pointer transition-colors ${
-                  star <= (hoverRating || rating) 
-                    ? 'fill-amber-400 text-amber-400' 
-                    : 'text-gray-200 hover:text-amber-200'
-                }`}
-              />
+                onClick={() => setRating(star)}
+              >
+                <Star
+                  className={`w-9 h-9 ${
+                    star <= (hoverRating || rating)
+                      ? "fill-[#C9A96A] text-[#C9A96A]"
+                      : "text-[#F5E6D3]/20"
+                  } transition-all`}
+                />
+              </button>
             ))}
           </div>
 
-          {/* Comment Box */}
-          <div className="mb-5">
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-              Write your review
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-[#C9A96A] mb-2">
+              Written Details (Optional)
             </label>
             <textarea
+              rows={4}
+              placeholder="Share details about the fit, quality, and style..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="What did you like or dislike?"
-              className="w-full p-3 bg-stone-50 border border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-colors"
-              rows="4"
-              required
+              className="w-full text-sm p-4 bg-[#080808] text-[#F5E6D3] placeholder:text-[#F5E6D3]/30 border border-[#C9A96A]/30 rounded-xl outline-none focus:ring-2 focus:ring-[#C9A96A]/50 transition-colors"
             />
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-70 shadow-sm"
-          >
-            {loading ? 'Submitting...' : 'Submit Review'}
-          </button>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-[#F5E6D3]/60 hover:text-white rounded-full transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-[#080808] bg-[#C9A96A] hover:bg-[#B38D46] rounded-full transition-all disabled:opacity-50"
+            >
+              {loading ? "Saving..." : (existingReview ? "Update" : "Publish")}
+            </button>
+          </div>
         </form>
       </div>
     </div>
