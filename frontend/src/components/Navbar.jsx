@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { ShoppingCart, User as UserIcon, LogOut, Store, ShieldCheck, Package, Sparkles } from 'lucide-react';
+import { ShoppingCart, User as UserIcon, LogOut, Store, ShieldCheck, Package, Info } from 'lucide-react';
 import ProfileDrawer from '../pages/ProfileDrawer';
 
 export default function Navbar() {
@@ -47,6 +47,15 @@ export default function Navbar() {
               className="hover:text-amber-700 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 hover:after:w-full after:h-0.5 after:bg-amber-500 after:transition-all"
             >
               Collections
+            </Link>
+
+            {/* About Page Link */}
+            <Link 
+              to="/about" 
+              className="hover:text-amber-700 transition-colors flex items-center gap-1.5 py-1"
+            >
+              <Info className="w-4 h-4 text-amber-600" />
+              About
             </Link>
 
             {/* User Orders Link: Customers Only */}

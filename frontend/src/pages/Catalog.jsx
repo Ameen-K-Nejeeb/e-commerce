@@ -16,6 +16,10 @@ import {
   Sparkles
 } from 'lucide-react';
 
+import HeroBanner from './HelloBanner';
+
+
+
 export default function Catalog() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -101,6 +105,8 @@ export default function Catalog() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-[#faf8f5]/40 min-h-screen">
       
+      <HeroBanner />
+
       {/* Top Header & Search */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-amber-100/80">
         <div>
