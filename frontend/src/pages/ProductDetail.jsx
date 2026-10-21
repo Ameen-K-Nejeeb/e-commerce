@@ -65,7 +65,8 @@ export default function ProductDetail() {
     try {
       const [productRes, reviewRes] = await Promise.all([
         api.get(`store/products/${id}/`),
-        api.get(`store/reviews/?product=${id}`),
+        // FIXED: Updated to the new verified reviews endpoint
+        api.get(`store/products/${id}/reviews/`), 
       ]);
       setProduct(productRes.data);
       setReviews(reviewRes.data);
@@ -181,7 +182,6 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
-    // 1. Guard check: redirect unauthenticated users to login
     if (!user) {
       navigate("/login");
       return;
@@ -189,7 +189,6 @@ export default function ProductDetail() {
 
     if (!product) return;
 
-    // 2. Add product to cart context
     const itemToAdd = {
       ...product,
       variant: selectedVariant,
@@ -412,7 +411,7 @@ export default function ProductDetail() {
                 ))}
               </div>
               <span className="text-xs font-bold text-gray-700">
-                {product.average_rating || "No ratings"}
+                {Number(product.average_rating) > 0 ? Number(product.average_rating).toFixed(1) : "No ratings"}
               </span>
               <span className="text-xs text-gray-400">
                 ({reviews.length} reviews)
@@ -708,6 +707,48 @@ export default function ProductDetail() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* --- INLINE CUSTOMER REVIEWS SECTION --- */}
+      <div className="mt-16 border-t border-gray-100 pt-10">
+        <h2 className="text-2xl font-extrabold text-gray-900 mb-6">Customer Reviews</h2>
+        
+        {reviews.length === 0 ? (
+          <div className="bg-gray-50 p-8 rounded-3xl text-center border border-gray-100">
+            <Star className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 font-medium">No reviews yet. Buy this product to be the first to review it!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {reviews.map((review) => (
+              <div key={review.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:border-gray-200 transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center rounded-full text-sm">
+                      {review.user_name ? review.user_name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{review.user_name || "Verified Customer"}</p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(review.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100">
+                    <span className="text-sm font-bold text-amber-700">{review.rating}</span>
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  </div>
+                </div>
+                
+                {review.comment && (
+                  <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                    "{review.comment}"
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

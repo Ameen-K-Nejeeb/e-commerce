@@ -10,8 +10,11 @@ from .views import (
     CreateCheckoutOrderView,
     VerifyPaymentView,
     UserOrdersView,
+
+    CheckoutCreateOrderView,
+    CheckoutVerifyPaymentView
 )
-from .views import VendorOrdersListView, VendorToggleProductStatusView, VendorFulfillmentUpdateView, ProductImageManageView, SetPrimaryImageView, ProductVariantManageView
+from .views import VendorOrdersListView, ProductReviewView,  VendorToggleProductStatusView, VendorFulfillmentUpdateView, ProductImageManageView, SetPrimaryImageView, ProductVariantManageView
 
 
 router = DefaultRouter()
@@ -43,4 +46,11 @@ urlpatterns = [
 
     path('products/<int:product_id>/variants/', ProductVariantManageView.as_view(), name='product_variants_add'),
     path('products/<int:product_id>/variants/<int:variant_id>/', ProductVariantManageView.as_view(), name='product_variants_delete'),
+
+
+
+    path('checkout/create-order/', CheckoutCreateOrderView.as_view(), name='checkout-create-order'),
+    path('checkout/verify-payment/', CheckoutVerifyPaymentView.as_view(), name='checkout-verify-payment'),
+
+    path('products/<int:pk>/reviews/', ProductReviewView.as_view(), name='product-reviews'),
 ]

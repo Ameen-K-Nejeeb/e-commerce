@@ -10,6 +10,7 @@ from .models import (
     OrderItem,
     ProductReview,
     ComplaintTicket,
+    Review,
 )
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -38,8 +39,6 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'user_email', 'rating', 'title', 'comment', 'is_verified_purchase', 'created_at')
         read_only_fields = ('user_email', 'is_verified_purchase', 'created_at')
 
-
-# store/serializers.py
 
 class ProductSerializer(serializers.ModelSerializer):
     vendor_name = serializers.ReadOnlyField(source='vendor.store_name')
@@ -105,33 +104,36 @@ class VendorProfileSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.ReadOnlyField(source='product.name')
-    variant_name = serializers.ReadOnlyField(source='variant.name')
-    vendor_store = serializers.ReadOnlyField(source='vendor.store_name')
+    product_name = serializers.CharField(source='product.name', read_only=True)
     product_image = serializers.SerializerMethodField()
+    variant_name = serializers.CharField(source='variant.name', read_only=True, default="")
+    vendor_store = serializers.CharField(source='vendor.store_name', read_only=True, default="")
+    order_created_at = serializers.DateTimeField(source='order.created_at', read_only=True)
+    order_id = serializers.IntegerField(source='order.id', read_only=True)
+    user_review = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = (
-            'id',
-            'product',
-            'product_name',
-            'product_image',
-            'variant',
-            'variant_name',
-            'vendor_store',
-            'unit_price',
-            'quantity',
-            'status',
-            'tracking_carrier',
-            'tracking_number',
-        )
+        fields = ['id', 'order_id', 'product', 'product_name', 'product_image', 'variant', 'variant_name', 
+                  'vendor', 'vendor_store', 'unit_price', 'quantity', 'status', 'tracking_carrier', 
+                  'tracking_number', 'order_created_at', 'user_review']
 
     def get_product_image(self, obj):
         if obj.product:
-            img = obj.product.images.filter(is_primary=True).first() or obj.product.images.first()
-            if img:
-                return img.image_url
+            primary_image = obj.product.images.filter(is_primary=True).first()
+            if primary_image:
+                return primary_image.image_url
+        return None
+
+    def get_user_review(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated and obj.product:
+            review = Review.objects.filter(product=obj.product, user=request.user).first()
+            if review:
+                return {
+                    "rating": review.rating,
+                    "comment": review.comment
+                }
         return None
 
 
@@ -144,8 +146,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'user_email', 'total_amount', 'status',
             'shipping_full_name', 'shipping_phone', 'shipping_address',
-            'shipping_city', 'shipping_pincode', 'tracking_carrier',
-            'tracking_number', 'items', 'created_at'
+            'shipping_city', 'shipping_pincode', 'items', 'created_at'
         )
         read_only_fields = ('total_amount', 'status', 'created_at')
 
@@ -170,6 +171,9 @@ class CustomerOrderItemSerializer(serializers.ModelSerializer):
     vendor_store = serializers.ReadOnlyField(source='vendor.store_name')
     product_image = serializers.SerializerMethodField()
     total_price = serializers.SerializerMethodField()
+    
+    # NEW: Fetch user review
+    user_review = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
@@ -189,6 +193,7 @@ class CustomerOrderItemSerializer(serializers.ModelSerializer):
             'tracking_carrier',
             'tracking_number',
             'updated_at',
+            'user_review', # ADDED HERE
         )
 
     def get_product_image(self, obj):
@@ -200,6 +205,18 @@ class CustomerOrderItemSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return str(obj.unit_price * obj.quantity)
+
+    # NEW: Logic to fetch review
+    def get_user_review(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated and obj.product:
+            review = Review.objects.filter(product=obj.product, user=request.user).first()
+            if review:
+                return {
+                    "rating": review.rating,
+                    "comment": review.comment
+                }
+        return None
 
 
 class VendorOrderItemSerializer(serializers.ModelSerializer):
@@ -244,3 +261,12 @@ class VendorOrderItemSerializer(serializers.ModelSerializer):
             if primary_img:
                 return primary_img.image_url
         return None
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.first_name', read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ['id', 'user_name', 'rating', 'comment', 'created_at']
+        read_only_fields = ['id', 'created_at']

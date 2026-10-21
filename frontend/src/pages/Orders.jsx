@@ -9,11 +9,15 @@ import {
   MessageSquarePlus,
   Clock,
   Store,
+  Star,
 } from "lucide-react";
+import ReviewModal from "../components/ReviewModal";
 
 export default function Orders() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Ticket State
   const [ticketModal, setTicketModal] = useState({
     open: false,
     orderId: null,
@@ -27,6 +31,14 @@ export default function Orders() {
   });
   const [ticketStatus, setTicketStatus] = useState({ error: "", success: "" });
 
+  // Review Modal State (Added existingReview)
+  const [reviewModalState, setReviewModalState] = useState({
+    isOpen: false,
+    productId: null,
+    productName: "",
+    existingReview: null,
+  });
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -34,7 +46,6 @@ export default function Orders() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      // Calls UserOrdersView which returns the flat list of items
       const res = await api.get("store/orders/");
       console.log("Customer orders received:", res.data);
       setItems(res.data || []);
@@ -45,6 +56,7 @@ export default function Orders() {
     }
   };
 
+  // --- TICKET HANDLERS ---
   const handleOpenTicket = (orderId, productId, productName) => {
     setTicketStatus({ error: "", success: "" });
     setTicketData({ ticket_type: "COMPLAINT", subject: "", description: "" });
@@ -85,45 +97,32 @@ export default function Orders() {
     }
   };
 
+  // --- REVIEW HANDLERS ---
+  const openReviewModal = (productId, productName, existingReview = null) => {
+    setReviewModalState({ isOpen: true, productId, productName, existingReview });
+  };
+
+  const handleReviewSuccess = () => {
+    // Re-fetch orders so the UI instantly shows the new rating and "Edit" button
+    fetchOrders(); 
+  };
+
   const getItemStatusBadge = (status) => {
     const map = {
-      CONFIRMED: {
-        bg: "bg-blue-50 text-blue-700 border-blue-200",
-        label: "Confirmed",
-      },
-      PAID: {
-        bg: "bg-blue-50 text-blue-700 border-blue-200",
-        label: "Confirmed",
-      },
-      PROCESSING: {
-        bg: "bg-amber-50 text-amber-700 border-amber-200",
-        label: "Processing by Seller",
-      },
-      SHIPPED: {
-        bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
-        label: "Shipped",
-      },
-      OUT_FOR_DELIVERY: {
-        bg: "bg-purple-50 text-purple-700 border-purple-200",
-        label: "Out for Delivery",
-      },
-      DELIVERED: {
-        bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
-        label: "Delivered",
-      },
-      CANCELLED: {
-        bg: "bg-rose-50 text-rose-700 border-rose-200",
-        label: "Cancelled",
-      },
+      CONFIRMED: { bg: "bg-blue-50 text-blue-700 border-blue-200", label: "Confirmed" },
+      PAID: { bg: "bg-blue-50 text-blue-700 border-blue-200", label: "Confirmed / Paid" },
+      PROCESSING: { bg: "bg-amber-50 text-amber-700 border-amber-200", label: "Processing by Seller" },
+      SHIPPED: { bg: "bg-indigo-50 text-indigo-700 border-indigo-200", label: "Shipped" },
+      OUT_FOR_DELIVERY: { bg: "bg-purple-50 text-purple-700 border-purple-200", label: "Out for Delivery" },
+      DELIVERED: { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", label: "Delivered" },
+      CANCELLED: { bg: "bg-rose-50 text-rose-700 border-rose-200", label: "Cancelled" },
     };
     const s = map[status] || {
       bg: "bg-gray-100 text-gray-700 border-gray-200",
       label: status ? status.replace(/_/g, " ") : "Confirmed",
     };
     return (
-      <span
-        className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full border uppercase tracking-wider ${s.bg}`}
-      >
+      <span className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full border uppercase tracking-wider ${s.bg}`}>
         {s.label}
       </span>
     );
@@ -165,7 +164,7 @@ export default function Orders() {
               <div className="bg-gray-50/70 px-5 py-3.5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex flex-wrap items-center gap-4 text-gray-500">
                   <span className="font-mono font-bold text-gray-900">
-                    Order #{item.order_id} • Item #{item.id}
+                    Order #{item.order_id} Item #{item.id}
                   </span>
                   <span>•</span>
                   <span>
@@ -227,22 +226,56 @@ export default function Orders() {
                   </div>
                 </div>
 
-                {/* Report Issue Action */}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() =>
-                      handleOpenTicket(
-                        item.order_id,
-                        item.product,
-                        item.product_name
-                      )
-                    }
-                    className="text-xs font-semibold text-gray-600 hover:text-indigo-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
-                  >
-                    <MessageSquarePlus className="w-3.5 h-3.5" />
-                    Report Issue
-                  </button>
-                </div>
+                {/* Actions: Report Issue & Rate Product */}
+                    <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => handleOpenTicket(item.order_id, item.product, item.product_name)}
+                        className="text-xs font-semibold text-gray-700 hover:text-indigo-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+                    >
+                        <MessageSquarePlus className="w-3.5 h-3.5" />
+                        Report Issue
+                    </button>
+
+                    {/* Show Stars if Reviewed, otherwise show Rate Product */}
+                    {(item.status === "DELIVERED" || item.status === "PAID") && (
+                        item.user_review ? (
+                        <div className="flex items-center gap-3">
+                            {/* 1. Show the beautiful "Reviewed" Star Badge */}
+                            <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200 shadow-sm">
+                            <span className="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider">Reviewed</span>
+                            <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                <Star
+                                    key={i}
+                                    className={`w-3.5 h-3.5 ${
+                                    i < item.user_review.rating
+                                        ? "fill-amber-400 text-amber-400"
+                                        : "text-amber-200"
+                                    }`}
+                                />
+                                ))}
+                            </div>
+                            </div>
+                            
+                            {/* 2. Smaller Edit Button */}
+                            <button
+                            onClick={() => openReviewModal(item.product, item.product_name, item.user_review)}
+                            className="text-xs font-bold text-gray-400 hover:text-indigo-600 underline transition-colors"
+                            >
+                            Edit
+                            </button>
+                        </div>
+                        ) : (
+                        <button
+                            onClick={() => openReviewModal(item.product, item.product_name)}
+                            className="text-xs font-bold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+                        >
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            Rate Product
+                        </button>
+                        )
+                    )}
+                    </div>
               </div>
 
               {/* Individual Courier & Tracking Footer */}
@@ -251,15 +284,11 @@ export default function Orders() {
                   <div className="flex items-center gap-2 text-indigo-900 font-medium">
                     <Truck className="w-4 h-4 text-indigo-600 flex-shrink-0" />
                     <span>
-                      Courier:{" "}
-                      <strong>{item.tracking_carrier || "Standard Delivery"}</strong>
+                      Courier: <strong>{item.tracking_carrier || "Standard Delivery"}</strong>
                     </span>
                     <span className="text-indigo-300">•</span>
                     <span>
-                      AWB / Tracking:{" "}
-                      <strong className="font-mono text-gray-900">
-                        {item.tracking_number}
-                      </strong>
+                      AWB / Tracking: <strong className="font-mono text-gray-900">{item.tracking_number}</strong>
                     </span>
                   </div>
                 ) : (
@@ -278,9 +307,8 @@ export default function Orders() {
       {ticketModal.open && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-1">
-              Submit Issue / Complaint
-            </h3>
+            {/* Modal content remains identical */}
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Submit Issue / Complaint</h3>
             <p className="text-xs text-gray-500 mb-4">
               Regarding <strong>{ticketModal.productName}</strong> (Order #{ticketModal.orderId})
             </p>
@@ -300,17 +328,10 @@ export default function Orders() {
 
             <form onSubmit={handleSubmitTicket} className="space-y-3">
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
-                  Issue Type
-                </label>
+                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Issue Type</label>
                 <select
                   value={ticketData.ticket_type}
-                  onChange={(e) =>
-                    setTicketData({
-                      ...ticketData,
-                      ticket_type: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setTicketData({ ...ticketData, ticket_type: e.target.value })}
                   className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 >
                   <option value="COMPLAINT">Product Quality / Complaint</option>
@@ -321,37 +342,26 @@ export default function Orders() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
-                  Subject
-                </label>
+                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Subject</label>
                 <input
                   type="text"
                   required
                   placeholder="Brief summary of the issue"
                   value={ticketData.subject}
-                  onChange={(e) =>
-                    setTicketData({ ...ticketData, subject: e.target.value })
-                  }
-                  className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  onChange={(e) => setTicketData({ ...ticketData, subject: e.target.value })}
+                  className="w-full text-xs p-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
-                  Description
-                </label>
+                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Description</label>
                 <textarea
                   rows={4}
                   required
                   placeholder="Provide full details so we can investigate and assist you..."
                   value={ticketData.description}
-                  onChange={(e) =>
-                    setTicketData({
-                      ...ticketData,
-                      description: e.target.value,
-                    })
-                  }
-                  className="w-full text-xs p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  onChange={(e) => setTicketData({ ...ticketData, description: e.target.value })}
+                  className="w-full text-xs p-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
@@ -359,12 +369,7 @@ export default function Orders() {
                 <button
                   type="button"
                   onClick={() =>
-                    setTicketModal({
-                      open: false,
-                      orderId: null,
-                      productId: null,
-                      productName: "",
-                    })
+                    setTicketModal({ open: false, orderId: null, productId: null, productName: "" })
                   }
                   className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
                 >
@@ -381,6 +386,16 @@ export default function Orders() {
           </div>
         </div>
       )}
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={reviewModalState.isOpen}
+        productId={reviewModalState.productId}
+        productName={reviewModalState.productName}
+        existingReview={reviewModalState.existingReview} // Passing it down
+        onClose={() => setReviewModalState({ isOpen: false, productId: null, productName: "", existingReview: null })}
+        onReviewSuccess={handleReviewSuccess}
+      />
     </div>
   );
 }

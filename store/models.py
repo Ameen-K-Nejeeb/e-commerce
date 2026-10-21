@@ -1,10 +1,13 @@
 # store/models.py
+from django.db.models import Avg
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 from django.db import models
 from django.conf import settings
 from decimal import Decimal
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 User = settings.AUTH_USER_MODEL
-
 
 class Category(models.Model):
     name = models.CharField(max_length=120, unique=True)
@@ -52,16 +55,14 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # THE REAL DATABASE FIELD:
+    average_rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0)
+    
     @property
     def effective_price(self):
         return self.discount_price if self.discount_price else self.base_price
 
-    @property
-    def average_rating(self):
-        reviews = self.reviews.all()
-        if reviews.exists():
-            return round(sum([r.rating for r in reviews]) / reviews.count(), 1)
-        return 0.0
+    # NOTICE: The @property def average_rating(self) HAS BEEN DELETED!
 
     def __str__(self):
         return f"{self.name} - ₹{self.effective_price}"
@@ -152,13 +153,10 @@ class OrderItem(models.Model):
         return f"{self.quantity}x {title} ({self.status}) @ ₹{self.unit_price}"
 
 
-
-
-
 class ProductReview(models.Model):
-    """Customer ratings and reviews."""
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    """Old Customer ratings and reviews (Kept to prevent migration errors)."""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='old_reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='old_reviews')
     rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
     title = models.CharField(max_length=150, blank=True)
     comment = models.TextField()
@@ -199,3 +197,38 @@ class ComplaintTicket(models.Model):
 
     def __str__(self):
         return f"Ticket #{self.id}: {self.subject} ({self.status})"
+
+
+class Review(models.Model):
+    """The active Review model."""
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='customer_reviews')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.first_name} - {self.product.name} ({self.rating} Stars)"
+
+
+@receiver(post_save, sender=Review)
+@receiver(post_delete, sender=Review)
+def update_product_rating(sender, instance, **kwargs):
+    """
+    This function automatically runs every time a Review is created, 
+    updated, or deleted.
+    """
+    product = instance.product
+    
+    # Calculate the average of all ratings for this specific product
+    avg_rating = product.customer_reviews.aggregate(Avg('rating'))['rating__avg']
+    
+    if avg_rating is None:
+        product.average_rating = 0.0
+    else:
+        product.average_rating = round(avg_rating, 1)
+        
+    product.save(update_fields=['average_rating'])

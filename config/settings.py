@@ -170,5 +170,5 @@ MAILERS = {
 
 
 # Payment gateway settings
-RAZORPAY_KEY_ID = 'rzp_test_placeholder_key'
-RAZORPAY_KEY_SECRET = 'placeholder_secret'
+RAZORPAY_KEY_ID = 'rzp_test_TqAwib1UlduMhE'
+RAZORPAY_KEY_SECRET = '49KojfjdVO6kzDerTw5SUuqt'

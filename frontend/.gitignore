@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+RAZORPAY_KEY_ID 
+RAZORPAY_KEY_SECRET 

@@ -23,6 +23,7 @@ from .models import (
     OrderItem,
     ProductReview,
     ComplaintTicket,
+    Review,
 )
 from .serializers import (
     CategorySerializer,
@@ -35,6 +36,8 @@ from .serializers import (
     ProductImageSerializer,
     ProductVariantSerializer,
     CustomerOrderItemSerializer,
+
+    ReviewSerializer,
 )
 
 from django.utils.text import slugify
@@ -92,7 +95,7 @@ class VendorProductListCreateView(generics.ListCreateAPIView):
         )
 
 
-        
+
 
 
 
@@ -417,7 +420,8 @@ class UserOrdersView(APIView):
             order__status=Order.Status.PAID
         ).select_related('order', 'product', 'variant', 'vendor').prefetch_related('product__images').order_by('-order__created_at')
 
-        serializer = CustomerOrderItemSerializer(items, many=True)
+        # FIXED: Added context={'request': request} here!
+        serializer = CustomerOrderItemSerializer(items, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -574,3 +578,149 @@ class VendorToggleProductStatusView(APIView):
             'is_active': product.is_active,
             'message': f"Product is now {'Active' if product.is_active else 'Deactivated'}."
         }, status=status.HTTP_200_OK)
+    
+
+
+
+
+
+
+
+
+client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+class CheckoutCreateOrderView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        items = data.get('items', [])
+        shipping = data.get('shipping', {})
+
+        if not items:
+            return Response({'error': 'Cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Calculate total amount dynamically from the database (never trust frontend prices)
+        total_amount = 0
+        for item in items:
+            product = Product.objects.get(id=item['product_id'])
+            price = product.effective_price if product.effective_price else product.base_price
+            total_amount += (price * item['quantity'])
+
+        # Convert to paise (Razorpay expects the amount in the smallest currency sub-unit)
+        amount_in_paise = int(total_amount * 100)
+
+        # 2. Create Razorpay Order
+        razorpay_order = client.order.create({
+            "amount": amount_in_paise,
+            "currency": "INR",
+            "payment_capture": "1" # Automatically capture payment
+        })
+
+        # 3. Create the Database Order
+        order = Order.objects.create(
+            user=request.user,
+            total_amount=total_amount,
+            razorpay_order_id=razorpay_order['id'],
+            shipping_name=shipping.get('full_name'),
+            shipping_address=shipping.get('address'),
+            shipping_city=shipping.get('city'),
+            shipping_pincode=shipping.get('pincode'),
+            shipping_phone=shipping.get('phone'),
+        )
+
+        # NOTE: Create your OrderItem logic here looping through 'items' and linking to 'order'
+
+        return Response({
+            "order_id": order.id,
+            "razorpay_order_id": razorpay_order['id'],
+            "amount": amount_in_paise,
+            "currency": "INR",
+            "razorpay_key": settings.RAZORPAY_KEY_ID
+        })
+
+class CheckoutVerifyPaymentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        razorpay_order_id = request.data.get('razorpay_order_id')
+        razorpay_payment_id = request.data.get('razorpay_payment_id')
+        razorpay_signature = request.data.get('razorpay_signature')
+
+        try:
+            # 1. Verify the signature using Razorpay SDK
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_signature': razorpay_signature
+            })
+
+            # 2. Update the Order status in the database
+            order = Order.objects.get(razorpay_order_id=razorpay_order_id)
+            order.payment_status = 'PAID'
+            order.razorpay_payment_id = razorpay_payment_id
+            order.razorpay_signature = razorpay_signature
+            order.save()
+
+            # NOTE: If building a multi-vendor system, this is where you change the status of OrderItems to "Processing"
+
+            return Response({"message": "Payment verified successfully!"}, status=status.HTTP_200_OK)
+        except razorpay.errors.SignatureVerificationError:
+            return Response({"error": "Payment verification failed. Invalid signature."}, status=status.HTTP_400_BAD_REQUEST)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+
+
+
+
+
+
+# store/views.py
+
+# store/views.py
+
+class ProductReviewView(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request, pk):
+        reviews = Review.objects.filter(product_id=pk).order_by('-created_at')
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        user = request.user
+
+        # 1. Verify they actually purchased the item
+        has_purchased = OrderItem.objects.filter(
+            order__user=user,
+            product=product
+        ).exists()
+
+        if not has_purchased:
+            return Response(
+                {"error": "You can only review products you have successfully ordered."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # 2. Check if this user already reviewed this product
+        existing_review = Review.objects.filter(product=product, user=user).first()
+
+        if existing_review:
+            # EDIT EXISTING REVIEW: Pass the existing review into the serializer
+            serializer = ReviewSerializer(existing_review, data=request.data, partial=True)
+            status_code = status.HTTP_200_OK
+        else:
+            # CREATE NEW REVIEW
+            serializer = ReviewSerializer(data=request.data)
+            status_code = status.HTTP_201_CREATED
+
+        # 3. Save the changes (this triggers your signal to update average_rating too!)
+        if serializer.is_valid():
+            serializer.save(product=product, user=user)
+            return Response(serializer.data, status=status_code)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
