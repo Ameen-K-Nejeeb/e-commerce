@@ -13,8 +13,6 @@ import {
   ClipboardList,
   MapPin,
   ExternalLink,
-  Edit3,
-  RefreshCw,
   Power,
   X,
 } from "lucide-react";
@@ -51,7 +49,7 @@ export default function VendorStudio() {
 
   useEffect(() => {
     fetchVendorStudioData();
-  }, []);
+  }, [user]);
 
   const fetchVendorStudioData = async () => {
     setLoading(true);
@@ -172,110 +170,94 @@ export default function VendorStudio() {
     }
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (!window.confirm("Delete this product?")) return;
-    try {
-      await api.delete(`store/products/${id}/`);
-      setProducts(products.filter((p) => p.id !== id));
-    } catch (err) {
-      alert("Failed to delete product.");
-    }
-  };
-
   if (loading) {
     return (
-      <div className="py-24 flex justify-center">
-        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      <div className="py-32 flex justify-center min-h-screen">
+        <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Vendor Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-200 gap-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-[#faf8f5]/40 min-h-screen">
+      {/* Studio Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between pb-8 border-b border-amber-100/80 gap-6">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-extrabold text-gray-900">
-              {vendorProfile?.store_name || "Vendor Studio"}
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl sm:text-4xl font-serif font-black text-stone-900">
+              {vendorProfile?.store_name || "Artisan Studio"}
             </h1>
             {vendorProfile?.is_approved ? (
-              <span className="px-2.5 py-0.5 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Approved
+              <span className="px-3 py-1 text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Certified
               </span>
             ) : (
-              <span className="px-2.5 py-0.5 text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-full flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5" /> Pending Verification
+              <span className="px-3 py-1 text-[9px] font-black uppercase tracking-widest bg-amber-50 text-amber-800 border border-amber-200 rounded-full flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" /> Under Review
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-1">
-            Manage product inventory and dispatch pending customer parcels.
+          <p className="text-xs uppercase tracking-widest font-semibold text-amber-800/60 mt-2">
+            Manage your fine jewelry collection and fulfill secure orders.
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl">
+        <div className="flex items-center bg-stone-100 p-1.5 rounded-2xl border border-stone-200 shadow-inner">
           <button
             onClick={() => setActiveTab("catalog")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === "catalog"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-900"
+            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+              activeTab === "catalog" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-900"
             }`}
           >
-            <Package className="w-4 h-4" /> Products ({products.length})
+            <Package className="w-4 h-4" /> Vault ({products.length})
           </button>
           <button
             onClick={() => setActiveTab("orders")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-              activeTab === "orders"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-900"
+            className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+              activeTab === "orders" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-900"
             }`}
           >
-            <ClipboardList className="w-4 h-4" /> Incoming Orders ({orders.length})
+            <ClipboardList className="w-4 h-4" /> Dispatches ({orders.length})
           </button>
         </div>
       </div>
 
       {/* VIEW 1: CATALOG MANAGEMENT */}
       {activeTab === "catalog" && (
-        <div className="mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+        <div className="mt-8 bg-white rounded-[2rem] border border-amber-100/60 shadow-xl shadow-amber-900/5 overflow-hidden">
+          <div className="p-6 sm:p-8 border-b border-amber-100/60 flex items-center justify-between bg-[#fcfaf7]">
             <div>
-              <h2 className="text-sm font-bold text-gray-800">Live Inventory</h2>
-              <p className="text-[11px] text-gray-400 mt-0.5">
-                Toggle products active or inactive to display or hide them from customer search.
-              </p>
+              <h2 className="text-lg font-serif font-bold text-stone-900">Atelier Inventory</h2>
+              <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400 mt-1">Publish or archive your creations.</p>
             </div>
             <button
               onClick={() => setShowProductModal(true)}
-              className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-sm"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-extrabold text-[10px] uppercase tracking-widest px-5 py-3 rounded-full transition-all shadow-md shadow-amber-600/20"
             >
-              <Plus className="w-3.5 h-3.5" /> Add Product
+              <Plus className="w-4 h-4" /> Add Piece
             </button>
           </div>
 
           {products.length === 0 ? (
-            <div className="p-12 text-center">
-              <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-xs text-gray-400">No products uploaded yet.</p>
+            <div className="p-16 text-center">
+              <Package className="w-12 h-12 text-amber-200 mx-auto mb-4" />
+              <p className="text-sm font-medium text-stone-400">The vault is currently empty.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-gray-600">
-                <thead className="bg-gray-50 uppercase text-[10px] tracking-wider text-gray-400 border-b border-gray-100">
+              <table className="w-full text-left text-xs text-stone-600 font-medium">
+                <thead className="bg-stone-50/50 uppercase text-[9px] font-black tracking-[0.2em] text-stone-400 border-b border-amber-100">
                   <tr>
-                    <th className="py-3 px-4">Product</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4">Price</th>
-                    <th className="py-3 px-4">Stock</th>
-                    <th className="py-3 px-4 text-center">Status</th>
-                    <th className="py-3 px-4 text-right">Action</th>
+                    <th className="py-4 px-6">Creation</th>
+                    <th className="py-4 px-6">Classification</th>
+                    <th className="py-4 px-6">Value</th>
+                    <th className="py-4 px-6">Vault</th>
+                    <th className="py-4 px-6 text-center">Visibility</th>
+                    <th className="py-4 px-6 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-amber-50">
                   {products.map((p) => {
                     const imgUrl = p.primary_image || p.images?.[0]?.image_url;
                     const isActive = p.is_active !== false;
@@ -284,12 +266,12 @@ export default function VendorStudio() {
                       <tr
                         key={p.id}
                         className={`transition-colors ${
-                          isActive ? "hover:bg-gray-50/50" : "bg-gray-50/40 opacity-75"
+                          isActive ? "hover:bg-amber-50/30" : "bg-stone-50/40 opacity-75"
                         }`}
                       >
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center border border-gray-200/60 flex-shrink-0">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#fcfaf7] rounded-xl overflow-hidden flex items-center justify-center border border-amber-100/50 flex-shrink-0">
                               {imgUrl ? (
                                 <img
                                   src={imgUrl}
@@ -297,44 +279,37 @@ export default function VendorStudio() {
                                   className={`w-full h-full object-cover ${
                                     !isActive ? "grayscale contrast-75" : ""
                                   }`}
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none";
-                                    e.currentTarget.parentElement.innerHTML =
-                                      '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>';
-                                  }}
                                 />
                               ) : (
-                                <Package className="w-5 h-5 text-gray-400" />
+                                <Package className="w-5 h-5 text-amber-200" />
                               )}
                             </div>
                             <div>
-                              <span className="font-bold text-gray-900 block text-xs">
+                              <span className="font-serif font-bold text-stone-900 text-sm block">
                                 {p.name}
                               </span>
-                              <span className="text-[10px] text-gray-400 font-mono">
-                                SKU: {p.sku || "N/A"}
+                              <span className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">
+                                Ref: {p.sku || "N/A"}
                               </span>
                             </div>
                           </div>
                         </td>
 
-                        <td className="py-3 px-4">
-                          {p.category_name || "General"}
-                        </td>
+                        <td className="py-4 px-6 font-semibold uppercase tracking-wider text-[10px]">{p.category_name || "General"}</td>
 
-                        <td className="py-3 px-4 font-bold text-indigo-600">
+                        <td className="py-4 px-6 font-black text-amber-700 text-sm">
                           ₹{Number(p.effective_price || p.base_price).toFixed(2)}
                         </td>
 
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-0.5 rounded font-bold text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
-                            {p.stock} units
+                        <td className="py-4 px-6">
+                          <span className="px-2.5 py-1 rounded-full font-black uppercase tracking-widest text-[9px] bg-stone-100 text-stone-600 border border-stone-200">
+                            {p.stock} Units
                           </span>
                         </td>
 
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-4 px-6 text-center">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] uppercase tracking-widest font-black border shadow-sm ${
                               isActive
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                 : "bg-rose-50 text-rose-700 border-rose-200"
@@ -345,23 +320,23 @@ export default function VendorStudio() {
                                 isActive ? "bg-emerald-500" : "bg-rose-500"
                               }`}
                             />
-                            {isActive ? "Active" : "Inactive"}
+                            {isActive ? "Displayed" : "Archived"}
                           </span>
                         </td>
 
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-4 px-6 text-right">
                           <button
                             type="button"
                             onClick={() => handleToggleProductStatus(p.id)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all border shadow-sm ${
                               isActive
                                 ? "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"
                                 : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
                             }`}
-                            title={isActive ? "Deactivate Product" : "Activate Product"}
+                            title={isActive ? "Archive Piece" : "Publish Piece"}
                           >
                             <Power className="w-3.5 h-3.5" />
-                            {isActive ? "Deactivate" : "Activate"}
+                            {isActive ? "Archive" : "Publish"}
                           </button>
                         </td>
                       </tr>
@@ -376,99 +351,93 @@ export default function VendorStudio() {
 
       {/* VIEW 2: INCOMING ORDERS & DISPATCH */}
       {activeTab === "orders" && (
-        <div className="mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+        <div className="mt-8 bg-white rounded-[2rem] border border-amber-100/60 shadow-xl shadow-amber-900/5 overflow-hidden">
+          <div className="p-6 sm:p-8 border-b border-amber-100/60 flex items-center justify-between bg-[#fcfaf7]">
             <div>
-              <h2 className="text-sm font-bold text-gray-800">
-                Orders Awaiting Dispatch & Tracking
+              <h2 className="text-lg font-serif font-bold text-stone-900">
+                Pending Dispatches
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Update shipping carriers and tracking numbers so customers can
-                monitor parcel deliveries.
+              <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400 mt-1">
+                Provide insured logistics details for your clients.
               </p>
             </div>
-            <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
-              {orders.length} Item{orders.length === 1 ? "" : "s"} Sold
+            <span className="text-[10px] font-black uppercase tracking-widest px-4 py-1.5 bg-amber-100/50 text-amber-800 rounded-full border border-amber-200">
+              {orders.length} Acquisition{orders.length === 1 ? "" : "s"}
             </span>
           </div>
 
           {orders.length === 0 ? (
-            <div className="p-12 text-center">
-              <ClipboardList className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-xs text-gray-400">
-                No customer orders received yet.
+            <div className="p-16 text-center">
+              <ClipboardList className="w-12 h-12 text-amber-200 mx-auto mb-4" />
+              <p className="text-sm font-medium text-stone-400">
+                No active acquisitions at this time.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-amber-50">
               {orders.map((item) => (
                 <div
                   key={item.id}
-                  className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors"
+                  className="p-6 sm:p-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6 hover:bg-amber-50/20 transition-colors"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 bg-gray-100 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-200/60 flex-shrink-0">
+                  <div className="flex items-start gap-5">
+                    <div className="w-16 h-16 bg-[#fcfaf7] rounded-2xl overflow-hidden flex items-center justify-center border border-amber-100/50 flex-shrink-0 shadow-inner">
                       {item.product_image ? (
                         <img
                           src={item.product_image}
                           alt={item.product_name}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                            e.currentTarget.parentElement.innerHTML =
-                              '<div class="w-full h-full flex items-center justify-center text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>';
-                          }}
                         />
                       ) : (
-                        <Package className="w-6 h-6 text-gray-400" />
+                        <Package className="w-6 h-6 text-amber-200" />
                       )}
                     </div>
 
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-gray-900">
-                          Order #{item.order_id}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-mono font-bold text-stone-900 tracking-wider">
+                          Ref #{item.order_id}
                         </span>
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                          className={`text-[9px] font-black px-2.5 py-1 rounded-full border uppercase tracking-widest shadow-sm ${
                             item.status === "DELIVERED"
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : item.status === "SHIPPED" ||
-                                  item.status === "OUT_FOR_DELIVERY"
-                                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                                : "bg-blue-50 text-blue-700 border-blue-200"
+                                item.status === "OUT_FOR_DELIVERY"
+                              ? "bg-amber-100 text-amber-900 border-amber-300"
+                              : "bg-stone-100 text-stone-700 border-stone-200"
                           }`}
                         >
                           {item.status || "CONFIRMED"}
                         </span>
                       </div>
 
-                      <h4 className="text-sm font-bold text-gray-900">
+                      <h4 className="text-base font-serif font-bold text-stone-900">
                         {item.quantity}x {item.product_name}{" "}
-                        {item.variant_name && `(${item.variant_name})`}
+                        {item.variant_name && <span className="text-amber-700 text-sm">({item.variant_name})</span>}
                       </h4>
 
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 pt-0.5">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-stone-500 pt-1">
+                        <span className="flex items-center gap-1.5 text-stone-700">
+                          <MapPin className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
                           {item.shipping_full_name}, {item.shipping_city} (
                           {item.shipping_pincode})
                         </span>
-                        <span>•</span>
+                        <span className="text-amber-200">•</span>
                         <span>
-                          Phone: <strong>{item.shipping_phone}</strong>
+                          Phone: <strong className="text-stone-700">{item.shipping_phone}</strong>
                         </span>
-                        <span>•</span>
-                        <span>Customer: {item.customer_email}</span>
+                        <span className="text-amber-200">•</span>
+                        <span>Client: {item.customer_email}</span>
                       </div>
 
                       {(item.tracking_carrier || item.tracking_number) && (
-                        <div className="flex items-center gap-2 pt-1 text-xs text-indigo-700 font-semibold">
-                          <Truck className="w-3.5 h-3.5 text-indigo-500" />
+                        <div className="flex items-center gap-2 pt-2 text-[10px] font-bold uppercase tracking-widest text-amber-800">
+                          <Truck className="w-3.5 h-3.5 text-amber-600" />
                           <span>
                             Carrier: {item.tracking_carrier || "Standard"} —
                             Tracking #{" "}
-                            <span className="font-mono text-gray-900">
+                            <span className="font-mono text-stone-900 tracking-widest">
                               {item.tracking_number}
                             </span>
                           </span>
@@ -480,10 +449,10 @@ export default function VendorStudio() {
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <button
                       onClick={() => handleOpenFulfillment(item)}
-                      className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-sm border border-indigo-100"
+                      className="px-5 py-2.5 bg-white hover:bg-stone-50 text-stone-700 text-[10px] uppercase tracking-widest font-black rounded-full transition-colors flex items-center gap-2 shadow-sm border border-stone-200"
                     >
-                      <Truck className="w-4 h-4" />
-                      Update Tracking & Status
+                      <Truck className="w-4 h-4 text-amber-600" />
+                      Update Logistics
                     </button>
                   </div>
                 </div>
@@ -495,23 +464,23 @@ export default function VendorStudio() {
 
       {/* FULFILLMENT / TRACKING MODAL */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-100">
-            <h3 className="text-base font-bold text-gray-900 mb-1">
-              Dispatch Order #{selectedOrder.order_id}
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] max-w-md w-full p-8 shadow-2xl border border-amber-100/60">
+            <h3 className="text-xl font-serif font-black text-stone-900 mb-1">
+              Dispatch Ref #{selectedOrder.order_id}
             </h3>
-            <p className="text-xs text-gray-400 mb-4">
-              Enter courier details for:{" "}
-              <strong>{selectedOrder.product_name}</strong>
+            <p className="text-xs text-stone-500 mb-6 font-medium">
+              Update secure logistics for:{" "}
+              <strong className="text-stone-800">{selectedOrder.product_name}</strong>
             </p>
 
             <form
               onSubmit={handleUpdateFulfillment}
-              className="space-y-4 text-xs"
+              className="space-y-5 text-sm"
             >
               <div>
-                <label className="block font-bold uppercase text-gray-500 mb-1">
-                  Fulfillment Status
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                  Transit Status
                 </label>
                 <select
                   value={fulfillmentForm.status}
@@ -521,24 +490,22 @@ export default function VendorStudio() {
                       status: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-colors"
+                  className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 font-medium text-stone-800 transition-colors"
                 >
-                  <option value="PROCESSING">Processing / Packing</option>
-                  <option value="SHIPPED">
-                    Handed over to Courier (Shipped)
-                  </option>
+                  <option value="PROCESSING">Artisan Processing</option>
+                  <option value="SHIPPED">Handed to Secure Carrier</option>
                   <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-                  <option value="DELIVERED">Delivered</option>
+                  <option value="DELIVERED">Delivered to Client</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-gray-500 mb-1">
-                  Shipping Carrier
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                  Logistics Partner
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. BlueDart, Delhivery, DTDC, India Post"
+                  placeholder="e.g. BlueDart, FedEx Secure"
                   value={fulfillmentForm.tracking_carrier}
                   onChange={(e) =>
                     setFulfillmentForm({
@@ -546,13 +513,13 @@ export default function VendorStudio() {
                       tracking_carrier: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-colors"
+                  className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 font-medium text-stone-900 placeholder:text-stone-400 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-gray-500 mb-1">
-                  Tracking / AWB Number
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                  AWB / Tracking Number
                 </label>
                 <input
                   type="text"
@@ -564,23 +531,23 @@ export default function VendorStudio() {
                       tracking_number: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-mono bg-gray-50 focus:bg-white transition-colors"
+                  className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 font-mono tracking-widest bg-stone-50 font-medium text-stone-900 placeholder:text-stone-400 transition-colors"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-amber-50/50">
                 <button
                   type="button"
                   onClick={() => setSelectedOrder(null)}
-                  className="px-4 py-2 font-semibold text-gray-500 hover:bg-gray-100 rounded-xl"
+                  className="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-stone-500 hover:bg-stone-100 rounded-full transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm"
+                  className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-white bg-stone-900 hover:bg-stone-800 rounded-full shadow-md transition-all"
                 >
-                  Save Dispatch Info
+                  Save Dispatch
                 </button>
               </div>
             </form>
@@ -590,15 +557,15 @@ export default function VendorStudio() {
 
       {/* ADD PRODUCT MODAL */}
       {showProductModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-gray-100 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-base font-bold text-gray-900 mb-3">
-              Add Product to Store
+        <div className="fixed inset-0 z-[70] bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl border border-amber-100/60 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-serif font-black text-stone-900 mb-6">
+              Catalog a New Creation
             </h3>
-            <form onSubmit={handleCreateProduct} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateProduct} className="space-y-4 text-sm">
               <div>
-                <label className="block font-bold uppercase text-gray-500 mb-1">
-                  Title
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                  Collection Title
                 </label>
                 <input
                   type="text"
@@ -607,14 +574,14 @@ export default function VendorStudio() {
                   onChange={(e) =>
                     setProductForm({ ...productForm, name: e.target.value })
                   }
-                  placeholder="Sneakers, Analog Watch, T-Shirt..."
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
+                  placeholder="e.g. 24K Gold Pearl Necklace"
+                  className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 text-stone-900 placeholder:text-stone-400 transition-colors font-medium"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold uppercase text-gray-500 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
                     Category
                   </label>
                   <select
@@ -626,9 +593,9 @@ export default function VendorStudio() {
                         category: e.target.value,
                       })
                     }
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
+                    className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 text-stone-900 transition-colors font-medium"
                   >
-                    <option value="">Select Category</option>
+                    <option value="">Select Classification</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -637,8 +604,8 @@ export default function VendorStudio() {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-bold uppercase text-gray-500 mb-1">
-                    SKU
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                    Ref / SKU
                   </label>
                   <input
                     type="text"
@@ -647,16 +614,16 @@ export default function VendorStudio() {
                     onChange={(e) =>
                       setProductForm({ ...productForm, sku: e.target.value })
                     }
-                    placeholder="PROD-001"
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
+                    placeholder="GLD-001"
+                    className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 font-mono tracking-wider text-stone-900 placeholder:text-stone-400 transition-colors"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block font-bold uppercase text-gray-500 mb-1">
-                    Base Price (₹)
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                    Base Value (₹)
                   </label>
                   <input
                     type="number"
@@ -669,12 +636,12 @@ export default function VendorStudio() {
                         base_price: e.target.value,
                       })
                     }
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
+                    className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 text-stone-900 font-medium transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold uppercase text-gray-500 mb-1">
-                    Discount Price (₹)
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                    Offer Value (₹)
                   </label>
                   <input
                     type="number"
@@ -686,12 +653,12 @@ export default function VendorStudio() {
                         discount_price: e.target.value,
                       })
                     }
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
+                    className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 text-stone-900 font-medium transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold uppercase text-gray-500 mb-1">
-                    Stock
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                    Vault Stock
                   </label>
                   <input
                     type="number"
@@ -700,14 +667,14 @@ export default function VendorStudio() {
                     onChange={(e) =>
                       setProductForm({ ...productForm, stock: e.target.value })
                     }
-                    className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
+                    className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 text-stone-900 font-medium transition-colors"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-gray-500 mb-1">
-                  Brand Name
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                  Hallmark / Brand
                 </label>
                 <input
                   type="text"
@@ -715,14 +682,14 @@ export default function VendorStudio() {
                   onChange={(e) =>
                     setProductForm({ ...productForm, brand: e.target.value })
                   }
-                  placeholder="Brand"
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
+                  placeholder="Atelier Signature"
+                  className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 text-stone-900 placeholder:text-stone-400 transition-colors font-medium"
                 />
               </div>
 
               <div>
-                <label className="block font-bold uppercase text-gray-500 mb-1">
-                  Description
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">
+                  Craftsmanship Details
                 </label>
                 <textarea
                   rows={3}
@@ -734,23 +701,24 @@ export default function VendorStudio() {
                       description: e.target.value,
                     })
                   }
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 focus:bg-white transition-colors"
+                  placeholder="Describe the cut, clarity, and materials..."
+                  className="w-full p-3 border border-amber-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 bg-stone-50 text-stone-900 placeholder:text-stone-400 transition-colors font-medium leading-relaxed"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-amber-50/50">
                 <button
                   type="button"
                   onClick={() => setShowProductModal(false)}
-                  className="px-4 py-2 font-semibold text-gray-500 hover:bg-gray-100 rounded-xl"
+                  className="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-stone-500 hover:bg-stone-100 rounded-full transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm"
+                  className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-white bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 rounded-full shadow-md shadow-amber-600/20 transition-all"
                 >
-                  Publish Item
+                  Publish Creation
                 </button>
               </div>
             </form>

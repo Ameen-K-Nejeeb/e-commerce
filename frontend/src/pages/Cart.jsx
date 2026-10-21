@@ -15,6 +15,8 @@ import {
   User as UserIcon,
   PlusCircle,
   Truck,
+  Sparkles,
+  Lock
 } from 'lucide-react';
 import ProfileDrawer from './ProfileDrawer';
 
@@ -100,7 +102,7 @@ export default function Cart() {
     }
 
     if (!shipping.full_name || !shipping.phone || !shipping.address || !shipping.city || !shipping.pincode) {
-      alert('Please provide complete recipient details and delivery address.');
+      alert('Please provide complete recipient details and delivery destination.');
       return;
     }
 
@@ -130,7 +132,7 @@ export default function Cart() {
           razorpay_signature: signature,
         });
         clearCart();
-        alert('Payment confirmed! Your order is now PAID.');
+        alert('Payment confirmed! Your order is secured.');
         navigate('/orders');
       };
 
@@ -140,8 +142,8 @@ export default function Cart() {
           key: data.razorpay_key,
           amount: data.amount,
           currency: data.currency,
-          name: 'MarketPulse Multi-Vendor',
-          description: `Order #${data.order_id}`,
+          name: 'Ornastyle Luxury',
+          description: `Acquisition Ref #${data.order_id}`,
           order_id: data.razorpay_order_id,
           handler: async function (response) {
             try {
@@ -155,12 +157,12 @@ export default function Cart() {
             email: user.email,
             contact: shipping.phone,
           },
-          theme: { color: '#4F46E5' },
+          theme: { color: '#d97706' }, // Amber 600
         };
 
         const rzp = new window.Razorpay(options);
         rzp.on('payment.failed', function () {
-          alert('Payment cancelled or failed. Order remains PENDING.');
+          alert('Payment cancelled or failed. Order remains pending in your vault.');
           navigate('/orders');
         });
         rzp.open();
@@ -174,12 +176,12 @@ export default function Cart() {
           const mockPaymentId = `pay_mock_${Date.now()}`;
           await triggerVerification(mockPaymentId, 'mock_signature_valid');
         } else {
-          alert('Payment skipped. Order saved as PENDING in My Orders.');
+          alert('Payment skipped. Acquisition saved as pending.');
           navigate('/orders');
         }
       }
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to initialize checkout.');
+      alert(err.response?.data?.error || 'Failed to initialize secure checkout.');
     } finally {
       setLoading(false);
     }
@@ -187,15 +189,15 @@ export default function Cart() {
 
   if (cart.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900">Your cart is empty</h2>
-        <p className="text-gray-500 mt-2 text-sm">Add clothes, shoes, gadgets, or watches to get started.</p>
+      <div className="max-w-7xl mx-auto px-4 py-32 text-center min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center">
+        <ShoppingBag className="w-16 h-16 text-amber-200 mx-auto mb-6" />
+        <h2 className="text-3xl font-serif font-black text-stone-900">Your bag is empty</h2>
+        <p className="text-stone-500 mt-2 text-sm font-medium">Discover fine jewelry and add pieces to your collection.</p>
         <Link
           to="/"
-          className="mt-6 inline-block bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+          className="mt-8 inline-block bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white font-bold uppercase tracking-widest px-8 py-3.5 rounded-full transition-all shadow-md shadow-amber-600/20 hover:scale-[1.02]"
         >
-          Explore Catalog
+          Explore Collections
         </Link>
       </div>
     );
@@ -203,248 +205,265 @@ export default function Cart() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Checkout & Shopping Cart</h1>
+      <div className="min-h-[calc(100vh-4rem)] bg-[#faf8f5]/40 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 border-b border-amber-100/60 pb-6">
+            <h1 className="text-3xl sm:text-4xl font-serif font-black text-stone-900">Secure Checkout</h1>
+            <p className="text-xs uppercase tracking-widest font-bold text-amber-700/60 mt-2 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> Confirm your acquisitions
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left: Items in Cart & Delivery Destination */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             
-            {/* Cart Items */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-              <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-indigo-600" /> Items in Cart ({cart.length})
-              </h2>
-
-              {cart.map((item) => (
-                <div
-                  key={`${item.id}-${item.variant?.id || 'base'}`}
-                  className="flex items-center justify-between py-3 border-b border-gray-50 last:border-none"
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Item Thumbnail */}
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center border border-gray-100 flex-shrink-0">
-                      {item.image || item.primary_image || item.product_image ? (
-                        <img
-                          src={item.image || item.primary_image || item.product_image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <ShoppingBag className="w-5 h-5 text-gray-400" />
-                      )}
-                    </div>
-
-                    <div>
-                      <h3 className="font-bold text-gray-900 text-sm leading-tight">{item.name}</h3>
-                      {item.variant && (
-                        <p className="text-xs text-indigo-600 font-semibold mt-0.5">
-                          Variant: {item.variant.name}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-0.5">Quantity: {item.quantity}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className="font-bold text-gray-900 text-sm">
-                      ₹{(Number(item.price) * item.quantity).toFixed(2)}
-                    </span>
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-gray-400 hover:text-rose-500 transition-colors p-1"
-                      title="Remove item"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Delivery Destination Section */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-indigo-600" /> Delivery Address
+            {/* Left: Items in Cart & Delivery Destination */}
+            <div className="lg:col-span-2 space-y-8">
+              
+              {/* Cart Items */}
+              <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-amber-100/60 shadow-xl shadow-amber-900/5">
+                <h2 className="text-lg font-serif font-black text-stone-900 border-b border-amber-100/60 pb-4 flex items-center gap-2.5">
+                  <ShoppingBag className="w-5 h-5 text-amber-600" /> Jewelry Bag ({cart.length})
                 </h2>
-                
-                {hasSavedAddress && !manualOverride && (
-                  <button
-                    type="button"
-                    onClick={() => setIsDrawerOpen(true)}
-                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 hover:underline"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" /> Edit Profile Address
-                  </button>
-                )}
+
+                <div className="pt-2">
+                  {cart.map((item) => (
+                    <div
+                      key={`${item.id}-${item.variant?.id || 'base'}`}
+                      className="flex items-center justify-between py-5 border-b border-stone-50 last:border-none"
+                    >
+                      <div className="flex items-center gap-5">
+                        {/* Item Thumbnail */}
+                        <div className="w-16 h-16 bg-[#fcfaf7] rounded-2xl overflow-hidden flex items-center justify-center border border-amber-100/50 flex-shrink-0 shadow-inner">
+                          {item.image || item.primary_image || item.product_image ? (
+                            <img
+                              src={item.image || item.primary_image || item.product_image}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ShoppingBag className="w-6 h-6 text-amber-200" />
+                          )}
+                        </div>
+
+                        <div>
+                          <h3 className="font-serif font-bold text-stone-900 text-base leading-tight">
+                            <Link to={`/product/${item.id}`} className="hover:text-amber-700 transition-colors">{item.name}</Link>
+                          </h3>
+                          {item.variant && (
+                            <p className="text-[10px] uppercase tracking-widest text-amber-700 font-bold mt-1.5">
+                              Spec: {item.variant.name}
+                            </p>
+                          )}
+                          <p className="text-xs font-medium text-stone-400 mt-1">Qty: {item.quantity}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-5">
+                        <span className="font-serif font-black text-stone-900 text-lg">
+                          ₹{(Number(item.price) * item.quantity).toFixed(2)}
+                        </span>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-stone-300 hover:text-rose-600 transition-colors p-1.5 bg-stone-50 hover:bg-rose-50 rounded-full"
+                          title="Remove piece"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {profileLoading ? (
-                <div className="py-6 text-center text-xs text-gray-400">Loading saved address...</div>
-              ) : hasSavedAddress && !manualOverride ? (
-                /* Primary View: 1-Click Saved Delivery Card */
-                <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-gray-900 text-sm">{shipping.full_name}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Default Saved Address
-                      </span>
-                    </div>
-
-                    <p className="text-gray-700 font-medium">
-                      {shipping.address}, {shipping.city}{shipping.state ? `, ${shipping.state}` : ''} —{' '}
-                      <span className="font-mono font-bold text-gray-900">{shipping.pincode}</span>
-                    </p>
-
-                    <div className="flex items-center gap-1 text-gray-500 pt-0.5">
-                      <Phone className="w-3.5 h-3.5 text-gray-400" />
-                      <span>Contact: <strong>{shipping.phone}</strong></span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
+              {/* Delivery Destination Section */}
+              <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-amber-100/60 shadow-xl shadow-amber-900/5">
+                <div className="flex items-center justify-between border-b border-amber-100/60 pb-4">
+                  <h2 className="text-lg font-serif font-black text-stone-900 flex items-center gap-2.5">
+                    <MapPin className="w-5 h-5 text-amber-600" /> Destination Vault
+                  </h2>
+                  
+                  {hasSavedAddress && !manualOverride && (
                     <button
                       type="button"
-                      onClick={() => setManualOverride(true)}
-                      className="text-[11px] font-bold px-3 py-1.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-white transition-colors"
+                      onClick={() => setIsDrawerOpen(true)}
+                      className="text-[10px] uppercase tracking-widest font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 transition-colors"
                     >
-                      Ship to Different Address
+                      <Edit3 className="w-3.5 h-3.5" /> Edit Profile Address
                     </button>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                /* Form Mode: Enter or Override Address */
-                <div className="space-y-4">
-                  {manualOverride && (
-                    <div className="flex items-center justify-between text-xs text-indigo-600 pb-1">
-                      <span>Entering an alternate address for this order.</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setManualOverride(false);
-                          loadSavedProfileAddress();
-                        }}
-                        className="font-bold underline"
-                      >
-                        Use Saved Profile Address
-                      </button>
+
+                <div className="pt-6">
+                  {profileLoading ? (
+                    <div className="py-6 text-center text-[10px] uppercase tracking-widest font-bold text-stone-400">Loading secure address...</div>
+                  ) : hasSavedAddress && !manualOverride ? (
+                    /* Primary View: 1-Click Saved Delivery Card */
+                    <div className="p-5 rounded-3xl bg-amber-50/40 border border-amber-200/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-sm">
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="font-black uppercase tracking-wider text-stone-900 text-sm">{shipping.full_name}</span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-widest font-black bg-emerald-100/80 text-emerald-800 border border-emerald-200 flex items-center gap-1 shadow-sm">
+                            <CheckCircle2 className="w-3 h-3" /> Default Vault
+                          </span>
+                        </div>
+
+                        <p className="text-stone-600 font-medium leading-relaxed">
+                          {shipping.address}, {shipping.city}{shipping.state ? `, ${shipping.state}` : ''} —{' '}
+                          <span className="font-mono font-bold text-stone-900">{shipping.pincode}</span>
+                        </p>
+
+                        <div className="flex items-center gap-1.5 text-stone-500 pt-1">
+                          <Phone className="w-3.5 h-3.5 text-stone-400" />
+                          <span className="font-medium">Direct Line: <strong className="text-stone-800">{shipping.phone}</strong></span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setManualOverride(true)}
+                          className="text-[10px] uppercase tracking-widest font-bold px-4 py-2.5 rounded-full border border-stone-200 text-stone-500 hover:bg-stone-50 hover:text-stone-800 transition-colors shadow-sm"
+                        >
+                          Ship Elsewhere
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Form Mode: Enter or Override Address */
+                    <div className="space-y-5">
+                      {manualOverride && (
+                        <div className="flex items-center justify-between text-xs text-amber-700 font-bold bg-amber-50 px-4 py-3 rounded-xl border border-amber-100">
+                          <span>Entering a one-time destination.</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setManualOverride(false);
+                              loadSavedProfileAddress();
+                            }}
+                            className="font-black uppercase tracking-widest hover:text-amber-900 transition-colors"
+                          >
+                            Use Profile Address
+                          </button>
+                        </div>
+                      )}
+
+                      {!hasSavedAddress && (
+                        <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-600 text-xs font-medium flex items-center justify-between">
+                          <span>No default vault saved in your profile.</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsDrawerOpen(true)}
+                            className="font-bold text-amber-700 hover:text-amber-800 uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" /> Save in Profile
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Recipient Name</label>
+                          <input
+                            type="text"
+                            required
+                            value={shipping.full_name}
+                            onChange={(e) => setShipping({ ...shipping, full_name: e.target.value })}
+                            placeholder="Full Name"
+                            className="w-full text-sm p-3 bg-stone-50 text-stone-900 font-medium placeholder:text-stone-400 border border-amber-200/60 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 focus:bg-white transition-colors"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Contact Line</label>
+                          <input
+                            type="text"
+                            required
+                            value={shipping.phone}
+                            onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
+                            placeholder="10-digit number"
+                            className="w-full text-sm p-3 bg-stone-50 text-stone-900 font-medium placeholder:text-stone-400 border border-amber-200/60 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 focus:bg-white transition-colors"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Estate / Address</label>
+                          <input
+                            type="text"
+                            required
+                            value={shipping.address}
+                            onChange={(e) => setShipping({ ...shipping, address: e.target.value })}
+                            placeholder="Suite, Building, Street"
+                            className="w-full text-sm p-3 bg-stone-50 text-stone-900 font-medium placeholder:text-stone-400 border border-amber-200/60 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 focus:bg-white transition-colors"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">City / District</label>
+                          <input
+                            type="text"
+                            required
+                            value={shipping.city}
+                            onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
+                            placeholder="e.g. Mumbai"
+                            className="w-full text-sm p-3 bg-stone-50 text-stone-900 font-medium placeholder:text-stone-400 border border-amber-200/60 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 focus:bg-white transition-colors"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1.5">Postal Code</label>
+                          <input
+                            type="text"
+                            required
+                            value={shipping.pincode}
+                            onChange={(e) => setShipping({ ...shipping, pincode: e.target.value })}
+                            placeholder="PIN code"
+                            className="w-full text-sm p-3 bg-stone-50 text-stone-900 font-medium font-mono tracking-widest placeholder:text-stone-400 border border-amber-200/60 rounded-xl outline-none focus:ring-2 focus:ring-amber-500/30 focus:bg-white transition-colors"
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
-
-                  {!hasSavedAddress && (
-                    <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-800 text-xs flex items-center justify-between">
-                      <span>No saved default address found in your account.</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsDrawerOpen(true)}
-                        className="font-bold text-indigo-700 underline flex items-center gap-1"
-                      >
-                        <PlusCircle className="w-3.5 h-3.5" /> Save in Profile
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Recipient Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={shipping.full_name}
-                        onChange={(e) => setShipping({ ...shipping, full_name: e.target.value })}
-                        placeholder="Full Name"
-                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Phone Number</label>
-                      <input
-                        type="text"
-                        required
-                        value={shipping.phone}
-                        onChange={(e) => setShipping({ ...shipping, phone: e.target.value })}
-                        placeholder="10-digit mobile number"
-                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Street Address</label>
-                      <input
-                        type="text"
-                        required
-                        value={shipping.address}
-                        onChange={(e) => setShipping({ ...shipping, address: e.target.value })}
-                        placeholder="House/Flat No, Street, Locality"
-                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-1">City / District</label>
-                      <input
-                        type="text"
-                        required
-                        value={shipping.city}
-                        onChange={(e) => setShipping({ ...shipping, city: e.target.value })}
-                        placeholder="e.g. Idukki, Kochi"
-                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-1">PIN Code</label>
-                      <input
-                        type="text"
-                        required
-                        value={shipping.pincode}
-                        onChange={(e) => setShipping({ ...shipping, pincode: e.target.value })}
-                        placeholder="6-digit PIN code"
-                        className="w-full text-xs p-2.5 bg-gray-50 text-gray-900 font-medium font-mono placeholder:text-gray-400 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors"
-                      />
-                    </div>
-                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right: Payment & Summary */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-4">
-            <h2 className="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">Order Summary</h2>
-            
-            <div className="space-y-2 text-xs text-gray-600 border-b border-gray-100 pb-4">
-              <div className="flex justify-between">
-                <span>Subtotal ({cart.length} item{cart.length > 1 ? 's' : ''})</span>
-                <span className="font-bold text-gray-900">₹{totalAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5">
-                  <Truck className="w-3.5 h-3.5 text-emerald-600" /> Standard Insured Shipping
-                </span>
-                <span className="font-bold text-emerald-600">FREE</span>
               </div>
             </div>
 
-            <div className="flex justify-between items-baseline py-2">
-              <span className="text-sm font-bold text-gray-800">Final Total</span>
-              <span className="text-2xl font-black text-indigo-600">₹{totalAmount.toFixed(2)}</span>
+            {/* Right: Payment & Summary */}
+            <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-amber-100/60 shadow-xl shadow-amber-900/5 h-fit space-y-6 sticky top-28">
+              <h2 className="text-lg font-serif font-black text-stone-900 border-b border-amber-100/60 pb-4">Appraisal & Finalization</h2>
+              
+              <div className="space-y-3 text-sm text-stone-500 font-medium border-b border-amber-100/60 pb-6">
+                <div className="flex justify-between">
+                  <span>Subtotal ({cart.length} piece{cart.length > 1 ? 's' : ''})</span>
+                  <span className="font-bold text-stone-900">₹{totalAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center py-1">
+                  <span className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-emerald-600" /> Insured Logistics
+                  </span>
+                  <span className="font-bold text-emerald-600 uppercase tracking-widest text-[10px]">Complimentary</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-end pt-2 pb-4">
+                <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Total Value</span>
+                <span className="text-3xl font-serif font-black text-amber-700">₹{totalAmount.toFixed(2)}</span>
+              </div>
+
+              <button
+                onClick={handleCheckout}
+                disabled={loading}
+                className="w-full py-4 px-6 rounded-full text-white font-black uppercase tracking-widest bg-gradient-to-r from-stone-900 to-stone-800 hover:from-black hover:to-stone-900 transition-all shadow-xl shadow-stone-900/20 flex items-center justify-center gap-2.5 text-xs disabled:opacity-50 hover:scale-[1.02]"
+              >
+                <ShieldCheck className="w-5 h-5 text-amber-400" />
+                {loading ? 'Securing Transaction...' : 'Complete Secure Checkout'}
+              </button>
+              
+              <p className="text-center text-[10px] text-stone-400 font-medium flex items-center justify-center gap-1.5 mt-4">
+                <Lock className="w-3 h-3" /> Payments protected by 256-bit encryption
+              </p>
             </div>
 
-            <button
-              onClick={handleCheckout}
-              disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl text-white font-bold bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-50"
-            >
-              <ShieldCheck className="w-5 h-5" />
-              {loading ? 'Processing...' : 'Pay with Razorpay'}
-            </button>
           </div>
-
         </div>
       </div>
 
