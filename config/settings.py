@@ -172,6 +172,7 @@ MAILERS = {
 }
 
 
+
 # Payment gateway settings
 RAZORPAY_KEY_ID = 'rzp_test_TqAwib1UlduMhE'
 RAZORPAY_KEY_SECRET = '49KojfjdVO6kzDerTw5SUuqt'
