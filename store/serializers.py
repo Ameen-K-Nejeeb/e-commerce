@@ -270,3 +270,39 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ['id', 'user_name', 'rating', 'comment', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+
+
+class AdminVendorSerializer(serializers.ModelSerializer):
+    # Pulls the email from the related User model
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    
+    class Meta:
+        model = VendorProfile
+        fields = ['id', 'user_email', 'store_name', 'is_approved', 'phone_number', 'address']
+
+
+
+class AdminComplaintSerializer(serializers.ModelSerializer):
+    customer_email = serializers.EmailField(source='order.customer.email', read_only=True)
+    order_ref = serializers.CharField(source='order.order_id', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    
+    class Meta:
+        model = ComplaintTicket # Replace with your actual model name
+        fields = [
+            'id', 'customer_email', 'order_ref', 'product_name', 
+            'ticket_type', 'subject', 'description', 'status', 'created_at'
+        ]
+
+
+class AdminProductSerializer(serializers.ModelSerializer):
+    vendor_name = serializers.CharField(source='vendor.store_name', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'vendor_name', 'category_name', 
+            'base_price', 'stock', 'is_active', 'created_at'
+        ]

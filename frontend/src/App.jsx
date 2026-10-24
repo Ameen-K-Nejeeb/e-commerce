@@ -1,19 +1,21 @@
 // src/App.jsx
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Catalog from './pages/Catalog';
-import ProductDetail from './pages/ProductDetail';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import VendorRegister from './pages/VendorRegister';
-import Cart from './pages/Cart';
-import Orders from './pages/Orders';
-import VendorStudio from './pages/VendorStudio';
-import ProtectedRoute from './components/ProtectedRoute';
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Catalog from "./pages/Catalog";
+import ProductDetail from "./pages/ProductDetail";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import VendorRegister from "./pages/VendorRegister";
+import Cart from "./pages/Cart";
+import Orders from "./pages/Orders";
+import VendorStudio from "./pages/VendorStudio";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-import About from './pages/About';
-import Footer from './components/Footer';
+import About from "./pages/About";
+import Footer from "./components/Footer";
+
+import AdminDashboard from "./pages/AdminDashboard";
 
 export default function App() {
   return (
@@ -36,12 +38,19 @@ export default function App() {
           </Route>
 
           {/* Vendor Studio Protected Route */}
-          <Route element={<ProtectedRoute allowedRoles={['VENDOR', 'ADMIN']} />}>
+          <Route
+            element={<ProtectedRoute allowedRoles={["VENDOR", "ADMIN"]} />}
+          >
             <Route path="/vendor/studio" element={<VendorStudio />} />
           </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Route>
+
         </Routes>
       </main>
-      <Footer/>
+      <Footer />
     </div>
   );
 }

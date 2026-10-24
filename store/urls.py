@@ -14,7 +14,11 @@ from .views import (
     CheckoutCreateOrderView,
     CheckoutVerifyPaymentView
 )
-from .views import VendorOrdersListView, ProductReviewView,  VendorToggleProductStatusView, VendorFulfillmentUpdateView, ProductImageManageView, SetPrimaryImageView, ProductVariantManageView
+from .views import (VendorOrdersListView, ProductReviewView,  VendorToggleProductStatusView, 
+                    VendorFulfillmentUpdateView, ProductImageManageView, SetPrimaryImageView, 
+                    ProductVariantManageView,AdminVendorListView, AdminVendorToggleApprovalView,
+                    AdminComplaintListView, AdminComplaintResolveView, AdminProductListView, 
+                    AdminProductToggleActiveView, AdminDashboardStatsView, AdminProductUpdateView)
 
 
 router = DefaultRouter()
@@ -53,4 +57,26 @@ urlpatterns = [
     path('checkout/verify-payment/', CheckoutVerifyPaymentView.as_view(), name='checkout-verify-payment'),
 
     path('products/<int:pk>/reviews/', ProductReviewView.as_view(), name='product-reviews'),
+
+
+    # Master Control: Vendor Management
+    path('admin/vendors/', AdminVendorListView.as_view(), name='admin-vendor-list'),
+    path('admin/vendors/<int:pk>/toggle-approval/', AdminVendorToggleApprovalView.as_view(), name='admin-vendor-toggle'),
+
+
+    # Master Control: Support Tickets
+    path('admin/complaints/', AdminComplaintListView.as_view(), name='admin-complaint-list'),
+    path('admin/complaints/<int:pk>/resolve/', AdminComplaintResolveView.as_view(), name='admin-complaint-resolve'),
+
+
+    path('admin/vendors/', AdminVendorListView.as_view(), name='admin-vendor-list'),
+    path('admin/vendors/<int:pk>/toggle-approval/', AdminVendorToggleApprovalView.as_view(), name='admin-vendor-toggle'),
+    path('admin/complaints/', AdminComplaintListView.as_view(), name='admin-complaint-list'),
+    path('admin/complaints/<int:pk>/resolve/', AdminComplaintResolveView.as_view(), name='admin-complaint-resolve'),
+
+    path('admin/products/', AdminProductListView.as_view(), name='admin-product-list'),
+    path('admin/products/<int:pk>/toggle-active/', AdminProductToggleActiveView.as_view(), name='admin-product-toggle'),
+    path('admin/stats/', AdminDashboardStatsView.as_view(), name='admin-stats'),
+
+    path('admin/products/<int:pk>/edit/', AdminProductUpdateView.as_view(), name='admin-product-edit'),
 ]

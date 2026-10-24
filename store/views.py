@@ -38,6 +38,9 @@ from .serializers import (
     CustomerOrderItemSerializer,
 
     ReviewSerializer,
+
+    AdminComplaintSerializer,
+    AdminVendorSerializer
 )
 
 from django.utils.text import slugify
@@ -724,3 +727,223 @@ class ProductReviewView(APIView):
             return Response(serializer.data, status=status_code)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+from .serializers import AdminVendorSerializer
+from rest_framework.permissions import IsAdminUser
+
+
+class AdminVendorListView(generics.ListAPIView):
+    """
+    Returns a list of all registered boutiques for the Master Control dashboard.
+    Restricted to Admin users only.
+    """
+    permission_classes = [IsAdminUser]
+    queryset = VendorProfile.objects.all().order_by('-id')  # Newest first
+    serializer_class = AdminVendorSerializer
+
+class AdminVendorToggleApprovalView(APIView):
+    """
+    Toggles the 'is_approved' status of a specific vendor.
+    Restricted to Admin users only.
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        vendor = get_object_or_404(VendorProfile, pk=pk)
+        
+        # Get the new status from the request payload
+        new_status = request.data.get('is_approved')
+        
+        if new_status is not None:
+            vendor.is_approved = new_status
+            vendor.save()
+            
+            # Optional: Send an email to the vendor here notifying them of approval/revocation
+            
+            return Response(
+                {"detail": "Boutique status updated.", "is_approved": vendor.is_approved},
+                status=status.HTTP_200_OK
+            )
+            
+        return Response(
+            {"error": "is_approved field is required."}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+
+
+
+# ==========================================
+# MASTER CONTROL: VENDOR MANAGEMENT
+# ==========================================
+
+class AdminVendorListView(generics.ListAPIView):
+    """
+    Returns a list of all registered boutiques.
+    Restricted to Super Admin users only.
+    """
+    permission_classes = [IsAdminUser]
+    queryset = VendorProfile.objects.all().order_by('-id')
+    serializer_class = AdminVendorSerializer
+
+
+class AdminVendorToggleApprovalView(APIView):
+    """
+    Toggles the 'is_approved' status of a specific boutique.
+    Restricted to Super Admin users only.
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        vendor = get_object_or_404(VendorProfile, pk=pk)
+        new_status = request.data.get('is_approved')
+        
+        if new_status is not None:
+            vendor.is_approved = new_status
+            vendor.save()
+            return Response(
+                {"detail": "Boutique status updated.", "is_approved": vendor.is_approved}, 
+                status=status.HTTP_200_OK
+            )
+            
+        return Response(
+            {"error": "is_approved field is required."}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+# ==========================================
+# MASTER CONTROL: SUPPORT TICKETS
+# ==========================================
+
+class AdminComplaintListView(generics.ListAPIView):
+    """
+    Returns all customer support tickets.
+    Restricted to Super Admin users only.
+    """
+    permission_classes = [IsAdminUser]
+    queryset = ComplaintTicket.objects.all().order_by('-created_at')
+    serializer_class = AdminComplaintSerializer
+
+
+class AdminComplaintResolveView(APIView):
+    """
+    Updates the status of a support ticket (e.g., marking it RESOLVED).
+    Restricted to Super Admin users only.
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        ticket = get_object_or_404(ComplaintTicket, pk=pk)
+        
+        # 'RESOLVED' matches your ComplaintTicket.Status choices
+        new_status = request.data.get('status', 'RESOLVED')
+        ticket.status = new_status
+        ticket.save()
+            
+        return Response(
+            {"detail": "Ticket status updated.", "status": ticket.status}, 
+            status=status.HTTP_200_OK
+        )
+
+
+
+
+from .serializers import AdminProductSerializer
+
+
+class AdminProductListView(generics.ListAPIView):
+    """
+    Returns every product on the platform for admin moderation.
+    """
+    permission_classes = [IsAdminUser]
+    queryset = Product.objects.all().order_by('-created_at')
+    serializer_class = AdminProductSerializer
+
+
+class AdminProductToggleActiveView(APIView):
+    """
+    Toggles the 'is_active' status of a product (Suspend/Publish).
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        new_status = request.data.get('is_active')
+        
+        if new_status is not None:
+            product.is_active = new_status
+            product.save()
+            return Response(
+                {"detail": "Piece visibility updated.", "is_active": product.is_active}, 
+                status=status.HTTP_200_OK
+            )
+            
+        return Response(
+            {"error": "is_active field is required."}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+
+from django.db.models import Sum
+from .models import Order, VendorProfile, ComplaintTicket
+
+# ==========================================
+# MASTER CONTROL: DASHBOARD STATS
+# ==========================================
+
+class AdminDashboardStatsView(APIView):
+    """
+    Returns real-time platform statistics for the Admin Overview.
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        # Calculate total revenue from PAID orders
+        revenue_agg = Order.objects.filter(status='PAID').aggregate(total=Sum('total_amount'))
+        total_revenue = revenue_agg['total'] or 0.00
+        
+        # Count approved boutiques
+        active_boutiques = VendorProfile.objects.filter(is_approved=True).count()
+        
+        # Count tickets that are OPEN or UNDER_REVIEW
+        open_tickets = ComplaintTicket.objects.filter(status__in=['OPEN', 'UNDER_REVIEW']).count()
+        
+        return Response({
+            "total_revenue": total_revenue,
+            "active_boutiques": active_boutiques,
+            "open_tickets": open_tickets
+        }, status=status.HTTP_200_OK)
+
+
+
+class AdminProductUpdateView(APIView):
+    """
+    Allows Super Admin to directly edit any product's details.
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        
+        # Update allowed fields if they are provided in the request
+        if 'name' in request.data:
+            product.name = request.data['name']
+        if 'base_price' in request.data:
+            product.base_price = request.data['base_price']
+        if 'stock' in request.data:
+            product.stock = request.data['stock']
+            
+        product.save()
+        
+        return Response({
+            "detail": "Piece updated successfully.",
+            "id": product.id,
+            "name": product.name,
+            "base_price": product.base_price,
+            "stock": product.stock
+        }, status=status.HTTP_200_OK)
