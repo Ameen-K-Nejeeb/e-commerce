@@ -12,6 +12,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404
 
+from rest_framework.permissions import IsAuthenticated
+
 from accounts.permissions import IsAdminRole, IsVendorRole
 from .models import (
     Category,
@@ -45,10 +47,16 @@ from .serializers import (
     AdminCategorySerializer,
     AdminOrderSerializer, 
     AdminReviewSerializer,
+
+    VendorStudioProductSerializer, 
+    VendorStudioOrderSerializer
 )
 
 from django.utils.text import slugify
 
+from rest_framework.exceptions import ValidationError
+from django.db.models.functions import TruncMonth
+from django.db.models import Sum, Count
 
 
 
@@ -1086,11 +1094,22 @@ class AdminReviewDeleteView(generics.DestroyAPIView):
 
 class AdminOrderUpdateView(APIView):
     permission_classes = [IsAdminUser]
+
     def patch(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
+        
+        # 1. Update Payment Status (on the Order model)
         if 'status' in request.data:
             order.status = request.data['status']
             order.save()
+            
+        # 2. Update Delivery Status (on the OrderItem models)
+        if 'fulfillment_status' in request.data:
+            new_status = request.data['fulfillment_status']
+            for item in order.items.all():
+                item.status = new_status
+                item.save()
+                
         return Response({"detail": "Order updated."}, status=status.HTTP_200_OK)
 
 class AdminCategoryUpdateView(APIView):
@@ -1133,38 +1152,114 @@ class AdminUserCreateView(APIView):
         if User.objects.filter(email=email).exists():
             return Response({'error': 'An account with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create the user and hash the password
-        user = User.objects.create_user(
-            username=email,  # If your custom user model relies on username
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name
-        )
-        
-        # Apply roles and permissions
-        if hasattr(user, 'role'):
-            user.role = role
+        try:
+            # 1. Safely build user data
+            user_kwargs = {
+                'email': email,
+                'password': password,
+                'first_name': first_name,
+                'last_name': last_name
+            }
             
-        if role == 'ADMIN':
-            user.is_staff = True
-            user.is_superuser = True
+            # Only add 'username' if your Django model actually requires it
+            field_names = [f.name for f in User._meta.fields]
+            if 'username' in field_names:
+                user_kwargs['username'] = email
+
+            user = User.objects.create_user(**user_kwargs)
             
-        user.save()
+            # 2. Apply roles and permissions
+            if hasattr(user, 'role'):
+                user.role = role
+                
+            if role == 'ADMIN':
+                user.is_staff = True
+                user.is_superuser = True
+                
+            user.save()
 
-        # If creating a vendor, generate a placeholder VendorProfile so they don't crash the vendor tabs
-        if role == 'VENDOR':
-            VendorProfile.objects.get_or_create(
-                user=user, 
-                defaults={
-                    'store_name': f"Boutique_{user.id}", 
-                    'slug': f"boutique-{user.id}",
-                    'business_email': user.email,
-                    'phone_number': '0000000000'
-                }
-            )
+            # 3. Securely auto-generate a Vendor profile with ALL required fields
+            if role == 'VENDOR':
+                from .models import VendorProfile
+                VendorProfile.objects.get_or_create(
+                    user=user, 
+                    defaults={
+                        'store_name': f"Boutique_{user.id}", 
+                        'slug': f"boutique-{user.id}",
+                        'business_email': user.email,
+                        'phone_number': '0000000000',
+                        'address': 'Pending Administrator Update' # Prevents database crash
+                    }
+                )
 
-        # Return the newly created user data to instantly update React
-        from .serializers import AdminUserSerializer # Local import to avoid circular errors
-        serializer = AdminUserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            from .serializers import AdminUserSerializer
+            serializer = AdminUserSerializer(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            # If it fails, send the EXACT Django error back to the React alert
+            return Response({'error': f"Database Error: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminUserDeleteView(generics.DestroyAPIView):
+    """
+    Permanently deletes a user account and all associated data (orders, boutiques, etc.).
+    """
+    permission_classes = [IsAdminUser]
+    queryset = User.objects.all()
+
+    def perform_destroy(self, instance):
+        # Prevent the Super Admin from accidentally deleting themselves
+        if instance == self.request.user:
+            raise ValidationError({"error": "You cannot delete your own Super Admin account."})
+        instance.delete()
+
+
+
+
+
+
+class VendorStudioProfileAPIView(APIView):
+    """Fetches the Store Name for the Studio Header"""
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        vendor = VendorProfile.objects.filter(user=request.user).first()
+        if not vendor:
+            return Response({"error": "No vendor profile found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"store_name": vendor.store_name, "is_approved": vendor.is_approved})
+
+class VendorProductsAPIView(generics.ListCreateAPIView):
+    """Lists all products for the logged-in vendor, and allows creating new ones"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = VendorStudioProductSerializer
+
+    def get_queryset(self):
+        return Product.objects.filter(vendor__user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        vendor = VendorProfile.objects.get(user=self.request.user)
+        serializer.save(vendor=vendor)
+
+class VendorProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """Allows hiding/publishing or deleting a specific product"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = VendorStudioProductSerializer
+
+    def get_queryset(self):
+        return Product.objects.filter(vendor__user=self.request.user)
+
+class VendorOrdersAPIView(generics.ListAPIView):
+    """Lists all purchased items that belong specifically to this vendor"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = VendorStudioOrderSerializer
+
+    def get_queryset(self):
+        return OrderItem.objects.filter(vendor__user=self.request.user).order_by('-order__created_at')
+
+class VendorOrderDetailAPIView(generics.RetrieveUpdateAPIView):
+    """Allows the vendor to update dispatch/tracking info"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = VendorStudioOrderSerializer
+
+    def get_queryset(self):
+        return OrderItem.objects.filter(vendor__user=self.request.user)

@@ -22,7 +22,9 @@ from .views import (VendorOrdersListView, ProductReviewView,  VendorToggleProduc
                     AdminUserListView, AdminUserToggleActiveView, AdminUserUpdateView,
                     AdminCategoryListCreateView, AdminOrderListView, AdminReviewListView, 
                     AdminReviewDeleteView, AdminOrderUpdateView, AdminCategoryUpdateView,
-                    AdminReviewToggleView,AdminUserCreateView)
+                    AdminReviewToggleView,AdminUserCreateView, AdminUserDeleteView,
+                    VendorStudioProfileAPIView, VendorProductsAPIView, 
+                    VendorProductDetailAPIView, VendorOrdersAPIView, VendorOrderDetailAPIView)
 
 
 router = DefaultRouter()
@@ -99,4 +101,13 @@ urlpatterns = [
     path('admin/reviews/<int:pk>/toggle/', AdminReviewToggleView.as_view(), name='admin-review-toggle'),
 
     path('admin/users/create/', AdminUserCreateView.as_view(), name='admin-user-create'),
+    path('admin/users/<int:pk>/delete/', AdminUserDeleteView.as_view(), name='admin-user-delete'),
+
+
+    path('vendor/profile/', VendorStudioProfileAPIView.as_view(), name='vendor-studio-profile'),
+    path('vendor/products/', VendorProductsAPIView.as_view(), name='vendor-products'),
+    path('vendor/products/<int:pk>/', VendorProductDetailAPIView.as_view(), name='vendor-product-detail'),
+    path('vendor/orders/', VendorOrdersAPIView.as_view(), name='vendor-orders'),
+    path('vendor/orders/<int:pk>/', VendorOrderDetailAPIView.as_view(), name='vendor-order-detail'),
+
 ]

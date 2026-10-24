@@ -86,23 +86,25 @@ class VendorRegisterView(APIView):
 
 
 class UserProfileView(APIView):
-    """
-    GET  /api/auth/profile/ -> Returns user profile and delivery address
-    PUT  /api/auth/profile/ -> Updates profile and delivery address
-    """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
+    # Loads the data into the drawer
     def get(self, request):
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request):
+    # Saves the data when you click "Update Vault"
+    def patch(self, request):
+        # partial=True allows saving just the fields that changed
         serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+            
+        # This will print the EXACT error in your Django terminal so we can see what's wrong!
+        print("PROFILE SAVE ERROR:", serializer.errors)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
 
 class GoogleAuthView(APIView):

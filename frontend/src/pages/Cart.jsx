@@ -139,7 +139,7 @@ export default function Cart() {
           key: data.razorpay_key,
           amount: data.amount,
           currency: data.currency,
-          name: 'VELMORA', // Updated to Velmora
+          name: 'VELMORA',
           description: `Acquisition Ref #${data.order_id}`,
           order_id: data.razorpay_order_id,
           handler: async function (response) {
@@ -154,7 +154,7 @@ export default function Cart() {
             email: user.email,
             contact: shipping.phone,
           },
-          theme: { color: '#C9A96A' }, // Updated to Velmora Antique Gold
+          theme: { color: '#C9A96A' }, 
         };
 
         const rzp = new window.Razorpay(options);
@@ -233,7 +233,13 @@ export default function Cart() {
                     </div>
                     <div className="flex items-center gap-5">
                       <span className="font-serif font-black text-[#C9A96A] text-lg">₹{(Number(item.price) * item.quantity).toFixed(2)}</span>
-                      <button onClick={() => removeFromCart(item.id)} className="text-[#F5E6D3]/40 hover:text-red-500 p-1.5 bg-[#080808] rounded-full"><Trash2 className="w-4 h-4" /></button>
+                      {/* UPDATED: Pass both ID and Variant ID to correctly delete the item */}
+                      <button 
+                        onClick={() => removeFromCart(item.id, item.variant?.id)} 
+                        className="text-[#F5E6D3]/40 hover:text-red-500 p-1.5 bg-[#080808] rounded-full transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}

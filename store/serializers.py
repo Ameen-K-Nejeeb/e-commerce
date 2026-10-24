@@ -349,10 +349,36 @@ class AdminCategorySerializer(serializers.ModelSerializer):
 
 class AdminOrderSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True)
-    
+    first_item_image = serializers.SerializerMethodField()
+    first_item_name = serializers.SerializerMethodField()
+    item_count = serializers.SerializerMethodField()
+    fulfillment_status = serializers.SerializerMethodField() # NEW
+
     class Meta:
         model = Order
-        fields = ['id', 'user_email', 'total_amount', 'status', 'created_at']
+        fields = [
+            'id', 'user_email', 'total_amount', 'status', 'created_at', 
+            'first_item_image', 'first_item_name', 'item_count', 'fulfillment_status'
+        ]
+
+    # Fetch the delivery status of the first item in the order
+    def get_fulfillment_status(self, obj):
+        first_item = obj.items.first()
+        return first_item.status if first_item else 'CONFIRMED'
+
+    def get_first_item_image(self, obj):
+        first_item = obj.items.first()
+        if first_item and first_item.product:
+            image = first_item.product.images.filter(is_primary=True).first() or first_item.product.images.first()
+            return image.image_url if image else None
+        return None
+
+    def get_first_item_name(self, obj):
+        first_item = obj.items.first()
+        return first_item.product.name if first_item and first_item.product else "Unknown Item"
+        
+    def get_item_count(self, obj):
+        return obj.items.count()
 
 class AdminReviewSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True)
@@ -361,3 +387,26 @@ class AdminReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ['id', 'user_email', 'product_name', 'rating', 'comment', 'created_at', 'is_hidden']
+
+
+
+class VendorStudioProductSerializer(serializers.ModelSerializer):
+    primary_image = serializers.SerializerMethodField()
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'base_price', 'stock', 'is_active', 'primary_image', 'category', 'category_name']
+
+    def get_primary_image(self, obj):
+        image = obj.images.filter(is_primary=True).first() or obj.images.first()
+        return image.image_url if image else None
+
+class VendorStudioOrderSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    created_at = serializers.DateTimeField(source='order.created_at', read_only=True)
+    user_email = serializers.CharField(source='order.user.email', read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product_id', 'product_name', 'quantity', 'unit_price', 'status', 'tracking_carrier', 'tracking_number', 'created_at', 'user_email']
