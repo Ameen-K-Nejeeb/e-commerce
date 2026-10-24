@@ -320,16 +320,31 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class AdminUserSerializer(serializers.ModelSerializer):
+    # Tell Django we are going to calculate the role dynamically
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        # Adjust these fields based on your custom User model
         fields = ['id', 'email', 'first_name', 'last_name', 'is_active', 'date_joined', 'role']
+
+    def get_role(self, obj):
+        # 1. If they have staff/superuser permissions, they are an ADMIN
+        if obj.is_superuser or obj.is_staff:
+            return 'ADMIN'
+            
+        # 2. Check if they have a VendorProfile linked to their account
+        # (This uses the 'related_name' from your VendorProfile model)
+        if hasattr(obj, 'vendor_profile'):
+            return 'VENDOR'
+            
+        # 3. If neither, they are a standard CUSTOMER
+        return 'CUSTOMER'
 
 
 class AdminCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'icon']
+        fields = ['id', 'name', 'slug', 'description', 'icon', 'is_active']
 
 
 class AdminOrderSerializer(serializers.ModelSerializer):
@@ -345,4 +360,4 @@ class AdminReviewSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Review
-        fields = ['id', 'user_email', 'product_name', 'rating', 'comment', 'created_at']
+        fields = ['id', 'user_email', 'product_name', 'rating', 'comment', 'created_at', 'is_hidden']

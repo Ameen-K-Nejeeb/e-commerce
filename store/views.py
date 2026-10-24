@@ -901,26 +901,36 @@ from .models import Order, VendorProfile, ComplaintTicket
 # ==========================================
 
 class AdminDashboardStatsView(APIView):
-    """
-    Returns real-time platform statistics for the Admin Overview.
-    """
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        # Calculate total revenue from PAID orders
         revenue_agg = Order.objects.filter(status='PAID').aggregate(total=Sum('total_amount'))
         total_revenue = revenue_agg['total'] or 0.00
-        
-        # Count approved boutiques
         active_boutiques = VendorProfile.objects.filter(is_approved=True).count()
-        
-        # Count tickets that are OPEN or UNDER_REVIEW
         open_tickets = ComplaintTicket.objects.filter(status__in=['OPEN', 'UNDER_REVIEW']).count()
+        
+        # Monthly Chart Data Generation
+        monthly_data = Order.objects.filter(status='PAID').annotate(
+            month=TruncMonth('created_at')
+        ).values('month').annotate(
+            revenue=Sum('total_amount'),
+            sales=Count('id')
+        ).order_by('month')[:6] # Last 6 active months
+
+        chart_data = [
+            {
+                "name": entry['month'].strftime('%b %Y') if entry['month'] else "N/A",
+                "revenue": float(entry['revenue'] or 0),
+                "sales": entry['sales']
+            }
+            for entry in monthly_data
+        ]
         
         return Response({
             "total_revenue": total_revenue,
             "active_boutiques": active_boutiques,
-            "open_tickets": open_tickets
+            "open_tickets": open_tickets,
+            "chart_data": chart_data
         }, status=status.HTTP_200_OK)
 
 
@@ -1072,3 +1082,89 @@ class AdminReviewDeleteView(generics.DestroyAPIView):
     """Delete inappropriate or fake reviews."""
     permission_classes = [IsAdminUser]
     queryset = Review.objects.all()
+
+
+class AdminOrderUpdateView(APIView):
+    permission_classes = [IsAdminUser]
+    def patch(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        if 'status' in request.data:
+            order.status = request.data['status']
+            order.save()
+        return Response({"detail": "Order updated."}, status=status.HTTP_200_OK)
+
+class AdminCategoryUpdateView(APIView):
+    permission_classes = [IsAdminUser]
+    def patch(self, request, pk):
+        category = get_object_or_404(Category, pk=pk)
+        if 'name' in request.data: category.name = request.data['name']
+        if 'slug' in request.data: category.slug = request.data['slug']
+        if 'icon' in request.data: category.icon = request.data['icon']
+        if 'description' in request.data: category.description = request.data['description']
+        if 'is_active' in request.data: category.is_active = request.data['is_active']
+        category.save()
+        return Response({"detail": "Category updated."}, status=status.HTTP_200_OK)
+
+class AdminReviewToggleView(APIView):
+    permission_classes = [IsAdminUser]
+    def patch(self, request, pk):
+        review = get_object_or_404(Review, pk=pk)
+        review.is_hidden = request.data.get('is_hidden', review.is_hidden)
+        review.save()
+        return Response({"detail": "Review visibility updated."}, status=status.HTTP_200_OK)
+
+
+class AdminUserCreateView(APIView):
+    """
+    Creates a new user from the Master Control panel and assigns the correct roles/permissions.
+    """
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        first_name = request.data.get('first_name', '')
+        last_name = request.data.get('last_name', '')
+        role = request.data.get('role', 'CUSTOMER')
+
+        if not email or not password:
+            return Response({'error': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email=email).exists():
+            return Response({'error': 'An account with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the user and hash the password
+        user = User.objects.create_user(
+            username=email,  # If your custom user model relies on username
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        # Apply roles and permissions
+        if hasattr(user, 'role'):
+            user.role = role
+            
+        if role == 'ADMIN':
+            user.is_staff = True
+            user.is_superuser = True
+            
+        user.save()
+
+        # If creating a vendor, generate a placeholder VendorProfile so they don't crash the vendor tabs
+        if role == 'VENDOR':
+            VendorProfile.objects.get_or_create(
+                user=user, 
+                defaults={
+                    'store_name': f"Boutique_{user.id}", 
+                    'slug': f"boutique-{user.id}",
+                    'business_email': user.email,
+                    'phone_number': '0000000000'
+                }
+            )
+
+        # Return the newly created user data to instantly update React
+        from .serializers import AdminUserSerializer # Local import to avoid circular errors
+        serializer = AdminUserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

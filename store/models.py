@@ -14,6 +14,7 @@ class Category(models.Model):
     slug = models.SlugField(max_length=140, unique=True)
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, blank=True, help_text="Lucide icon name e.g. Smartphone, Shirt, Watch")
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = "Categories"
@@ -206,6 +207,7 @@ class Review(models.Model):
     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    is_hidden = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['-created_at']

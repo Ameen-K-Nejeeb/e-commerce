@@ -21,7 +21,8 @@ from .views import (VendorOrdersListView, ProductReviewView,  VendorToggleProduc
                     AdminProductToggleActiveView, AdminDashboardStatsView, AdminProductUpdateView,
                     AdminUserListView, AdminUserToggleActiveView, AdminUserUpdateView,
                     AdminCategoryListCreateView, AdminOrderListView, AdminReviewListView, 
-                    AdminReviewDeleteView)
+                    AdminReviewDeleteView, AdminOrderUpdateView, AdminCategoryUpdateView,
+                    AdminReviewToggleView,AdminUserCreateView)
 
 
 router = DefaultRouter()
@@ -92,4 +93,10 @@ urlpatterns = [
     path('admin/orders/', AdminOrderListView.as_view(), name='admin-order-list'),
     path('admin/reviews/', AdminReviewListView.as_view(), name='admin-review-list'),
     path('admin/reviews/<int:pk>/delete/', AdminReviewDeleteView.as_view(), name='admin-review-delete'),
+
+    path('admin/orders/<int:pk>/edit/', AdminOrderUpdateView.as_view(), name='admin-order-edit'),
+    path('admin/categories/<int:pk>/edit/', AdminCategoryUpdateView.as_view(), name='admin-category-edit'),
+    path('admin/reviews/<int:pk>/toggle/', AdminReviewToggleView.as_view(), name='admin-review-toggle'),
+
+    path('admin/users/create/', AdminUserCreateView.as_view(), name='admin-user-create'),
 ]
