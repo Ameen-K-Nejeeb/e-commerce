@@ -296,13 +296,53 @@ class AdminComplaintSerializer(serializers.ModelSerializer):
         ]
 
 
+
 class AdminProductSerializer(serializers.ModelSerializer):
     vendor_name = serializers.CharField(source='vendor.store_name', read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
+    image_url = serializers.SerializerMethodField() 
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'vendor_name', 'category_name', 
-            'base_price', 'stock', 'is_active', 'created_at'
+            'base_price', 'stock', 'is_active', 'created_at', 'image_url'
         ]
+
+    # Moved this method up so it belongs to AdminProductSerializer
+    def get_image_url(self, obj):
+        image = obj.images.filter(is_primary=True).first() or obj.images.first()
+        return image.image_url if image else None
+
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        # Adjust these fields based on your custom User model
+        fields = ['id', 'email', 'first_name', 'last_name', 'is_active', 'date_joined', 'role']
+
+
+class AdminCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'description', 'icon']
+
+
+class AdminOrderSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    
+    class Meta:
+        model = Order
+        fields = ['id', 'user_email', 'total_amount', 'status', 'created_at']
+
+class AdminReviewSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ['id', 'user_email', 'product_name', 'rating', 'comment', 'created_at']

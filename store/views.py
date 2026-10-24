@@ -36,11 +36,15 @@ from .serializers import (
     ProductImageSerializer,
     ProductVariantSerializer,
     CustomerOrderItemSerializer,
+    
 
     ReviewSerializer,
 
     AdminComplaintSerializer,
-    AdminVendorSerializer
+    AdminVendorSerializer,
+    AdminCategorySerializer,
+    AdminOrderSerializer, 
+    AdminReviewSerializer,
 )
 
 from django.utils.text import slugify
@@ -947,3 +951,124 @@ class AdminProductUpdateView(APIView):
             "base_price": product.base_price,
             "stock": product.stock
         }, status=status.HTTP_200_OK)
+
+
+from django.contrib.auth import get_user_model
+from .serializers import AdminUserSerializer
+
+User = get_user_model()
+
+# ==========================================
+# MASTER CONTROL: CLIENT DIRECTORY
+# ==========================================
+
+class AdminUserListView(generics.ListAPIView):
+    """
+    Returns a list of all registered users on the platform.
+    """
+    permission_classes = [IsAdminUser]
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = AdminUserSerializer
+
+
+class AdminUserToggleActiveView(APIView):
+    """
+    Toggles the 'is_active' status of a user account (Suspend/Ban).
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        
+        # Prevent the Super Admin from accidentally suspending themselves
+        if user == request.user:
+            return Response(
+                {"error": "You cannot suspend your own Super Admin account."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        new_status = request.data.get('is_active')
+        
+        if new_status is not None:
+            user.is_active = new_status
+            user.save()
+            return Response(
+                {"detail": "Client account status updated.", "is_active": user.is_active}, 
+                status=status.HTTP_200_OK
+            )
+            
+        return Response(
+            {"error": "is_active field is required."}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+
+class AdminUserUpdateView(APIView):
+    """
+    Allows Super Admin to directly edit a client's profile and reset their password.
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        
+        # Update text fields if provided
+        if 'first_name' in request.data:
+            user.first_name = request.data['first_name']
+        if 'last_name' in request.data:
+            user.last_name = request.data['last_name']
+        if 'email' in request.data:
+            user.email = request.data['email']
+            # If your custom user model uses email as the unique username field:
+            if hasattr(user, 'username') and user.username == user.email:
+                 user.username = request.data['email']
+        
+        # Securely update password if a new one was typed in the dashboard
+        password = request.data.get('password')
+        if password:
+            user.set_password(password)
+            
+        user.save()
+        
+        return Response({
+            "detail": "Client updated successfully.",
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email
+        }, status=status.HTTP_200_OK)
+
+
+class AdminCategoryListCreateView(generics.ListCreateAPIView):
+    """
+    Allows Super Admin to view all categories and create new ones.
+    """
+    permission_classes = [IsAdminUser]
+    queryset = Category.objects.all().order_by('name')
+    serializer_class = AdminCategorySerializer
+
+
+
+# ==========================================
+# MASTER CONTROL: ORDERS
+# ==========================================
+class AdminOrderListView(generics.ListAPIView):
+    """View all platform transactions."""
+    permission_classes = [IsAdminUser]
+    queryset = Order.objects.all().order_by('-created_at')
+    serializer_class = AdminOrderSerializer
+
+# ==========================================
+# MASTER CONTROL: REVIEWS
+# ==========================================
+class AdminReviewListView(generics.ListAPIView):
+    """View all platform product reviews."""
+    permission_classes = [IsAdminUser]
+    queryset = Review.objects.all().order_by('-created_at')
+    serializer_class = AdminReviewSerializer
+
+class AdminReviewDeleteView(generics.DestroyAPIView):
+    """Delete inappropriate or fake reviews."""
+    permission_classes = [IsAdminUser]
+    queryset = Review.objects.all()
