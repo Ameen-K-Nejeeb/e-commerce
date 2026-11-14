@@ -402,11 +402,57 @@ class VendorStudioProductSerializer(serializers.ModelSerializer):
         image = obj.images.filter(is_primary=True).first() or obj.images.first()
         return image.image_url if image else None
 
+# store/serializers.py
+# store/serializers.py
+
+# store/serializers.py
+
 class VendorStudioOrderSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     created_at = serializers.DateTimeField(source='order.created_at', read_only=True)
     user_email = serializers.CharField(source='order.user.email', read_only=True)
+    
+    customer_name = serializers.SerializerMethodField()
+    customer_phone = serializers.SerializerMethodField()
+    shipping_address = serializers.SerializerMethodField()
+    city_district = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
+    pincode = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product_id', 'product_name', 'quantity', 'unit_price', 'status', 'tracking_carrier', 'tracking_number', 'created_at', 'user_email']
+        fields = [
+            'id', 'product_id', 'product_name', 'quantity', 'unit_price', 'status', 
+            'tracking_carrier', 'tracking_number', 'created_at', 'user_email',
+            'customer_name', 'customer_phone', 'shipping_address', 'city_district', 'state', 'pincode'
+        ]
+
+    def get_customer_name(self, obj):
+        # Grabs your exact shipping_full_name field
+        if hasattr(obj.order, 'shipping_full_name') and obj.order.shipping_full_name: 
+            return obj.order.shipping_full_name
+        return f"{obj.order.user.first_name} {obj.order.user.last_name}".strip() or "Unknown Client"
+
+    def get_customer_phone(self, obj):
+        if hasattr(obj.order, 'shipping_phone') and obj.order.shipping_phone: 
+            return obj.order.shipping_phone
+        return obj.order.user.phone_number if hasattr(obj.order.user, 'phone_number') else ""
+
+    def get_shipping_address(self, obj):
+        if hasattr(obj.order, 'shipping_address') and obj.order.shipping_address: 
+            return obj.order.shipping_address
+        return obj.order.user.address if hasattr(obj.order.user, 'address') else ""
+
+    def get_city_district(self, obj):
+        if hasattr(obj.order, 'shipping_city') and obj.order.shipping_city: 
+            return obj.order.shipping_city
+        return obj.order.user.city_district if hasattr(obj.order.user, 'city_district') else ""
+
+    def get_state(self, obj):
+        # Your Order model doesn't have shipping_state, so it pulls it directly from their Vault Profile!
+        return obj.order.user.state if hasattr(obj.order.user, 'state') else ""
+
+    def get_pincode(self, obj):
+        if hasattr(obj.order, 'shipping_pincode') and obj.order.shipping_pincode: 
+            return obj.order.shipping_pincode
+        return obj.order.user.pincode if hasattr(obj.order.user, 'pincode') else ""

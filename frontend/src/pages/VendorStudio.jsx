@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { 
   Package, Plus, Trash2, Truck, Store, 
   CheckCircle2, AlertTriangle, MapPin, ExternalLink, 
-  Power, X, IndianRupee, Eye, Loader2, Sparkles 
+  Power, X, IndianRupee, Eye, Loader2, Sparkles, User, Phone 
 } from "lucide-react";
 
 export default function VendorStudio() {
@@ -20,6 +20,7 @@ export default function VendorStudio() {
   
   // Modals & Forms
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedCustomerDetail, setSelectedCustomerDetail] = useState(null); // Controls the Delivery Details Modal
   const [fulfillmentForm, setFulfillmentForm] = useState({ status: "PROCESSING", tracking_carrier: "", tracking_number: "" });
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState({ name: "", category: "", brand: "", sku: "", base_price: "", discount_price: "", stock: "10", description: "" });
@@ -32,11 +33,10 @@ export default function VendorStudio() {
   const fetchVendorStudioData = async () => {
     try {
       setLoading(true);
-      // Ensure backend endpoints match your Django URLs exactly
       const [profileRes, productsRes, categoriesRes, ordersRes] = await Promise.all([
         api.get("store/vendor/profile/"),
         api.get("store/vendor/products/"),
-        api.get("store/categories/"), // Assuming public or specific vendor categories
+        api.get("store/categories/"), 
         api.get("store/vendor/orders/")
       ]);
 
@@ -228,7 +228,7 @@ export default function VendorStudio() {
           <div className="mt-10 bg-[#111111] rounded-[2rem] border border-[#C9A96A]/20 overflow-hidden">
             <div className="p-6 sm:p-8 border-b border-[#C9A96A]/20 bg-[#151515]">
               <h2 className="text-xl font-serif font-bold text-[#C9A96A]">Dispatch Management</h2>
-              <p className="text-xs text-[#F5E6D3]/50 mt-1">Update fulfillment statuses and attach courier tracking details.</p>
+              <p className="text-xs text-[#F5E6D3]/50 mt-1">Update fulfillment statuses and view client delivery details.</p>
             </div>
             
             <div className="p-0">
@@ -246,6 +246,7 @@ export default function VendorStudio() {
                         <th className="py-5 px-6">Order Details</th>
                         <th className="py-5 px-6">Quantity & Price</th>
                         <th className="py-5 px-6">Current Status</th>
+                        <th className="py-5 px-6 text-center">Customer</th> {/* THE EYE ICON COLUMN */}
                         <th className="py-5 px-6 text-right">Fulfillment</th>
                       </tr>
                     </thead>
@@ -270,6 +271,18 @@ export default function VendorStudio() {
                               {item.status.replace(/_/g, ' ')}
                             </span>
                           </td>
+                          
+                          {/* THE EYE ICON TRIGGER */}
+                          <td className="py-5 px-6 text-center">
+                            <button 
+                              onClick={() => setSelectedCustomerDetail(item)} 
+                              className="text-[#F5E6D3]/50 hover:text-[#C9A96A] p-2 hover:bg-[#C9A96A]/10 rounded-lg transition-colors inline-flex justify-center items-center" 
+                              title="View Customer Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+
                           <td className="py-5 px-6 text-right">
                             <button onClick={() => handleOpenFulfillment(item)} className="px-4 py-2 text-[9px] uppercase tracking-widest font-bold border border-[#C9A96A] bg-[#C9A96A]/10 text-[#C9A96A] hover:bg-[#C9A96A] hover:text-[#080808] rounded-full transition-colors flex items-center justify-center gap-1.5 ml-auto">
                               <Truck className="w-3 h-3" /> Update
@@ -281,6 +294,82 @@ export default function VendorStudio() {
                   </table>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* CUSTOMER DETAILS MODAL (The Eye Icon Popup) */}
+        {/* CUSTOMER DETAILS MODAL (The Eye Icon Popup) */}
+        {selectedCustomerDetail && (
+          <div className="fixed inset-0 z-[70] bg-[#080808]/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-[#111111] rounded-[2rem] max-w-md w-full p-8 border border-[#C9A96A]/30 shadow-2xl">
+              <div className="flex justify-between items-start mb-6 border-b border-[#C9A96A]/20 pb-4">
+                <div>
+                  <h3 className="text-xl font-serif font-black text-[#C9A96A]">Delivery Details</h3>
+                  <p className="text-[10px] uppercase tracking-widest text-[#F5E6D3]/50 mt-1">Order Ref #{selectedCustomerDetail.id}</p>
+                </div>
+                <button onClick={() => setSelectedCustomerDetail(null)} className="text-[#F5E6D3]/50 hover:text-[#C9A96A] transition-colors">
+                  <X className="w-5 h-5"/>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Client Name */}
+                <div className="flex items-start gap-4">
+                  <User className="w-4 h-4 text-[#C9A96A] mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-[#F5E6D3]/50 mb-0.5">Client Name</p>
+                    <p className="text-sm font-bold text-[#F5E6D3]">{selectedCustomerDetail.customer_name || 'Name not provided'}</p>
+                    <p className="text-xs text-[#F5E6D3]/70 font-mono mt-0.5">{selectedCustomerDetail.user_email}</p>
+                  </div>
+                </div>
+
+                {/* Contact Number */}
+                <div className="flex items-start gap-4">
+                  <Phone className="w-4 h-4 text-[#C9A96A] mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-[#F5E6D3]/50 mb-0.5">Contact Number</p>
+                    <p className="text-sm font-bold text-[#F5E6D3]">{selectedCustomerDetail.customer_phone || 'Phone not provided'}</p>
+                  </div>
+                </div>
+
+                {/* Shipping Address */}
+                <div className="flex items-start gap-4">
+                  <MapPin className="w-4 h-4 text-[#C9A96A] mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-[#F5E6D3]/50 mb-0.5">Shipping Address</p>
+                    <p className="text-sm text-[#F5E6D3] leading-relaxed">
+                      {selectedCustomerDetail.shipping_address ? (
+                        <>
+                          <span className="block mb-1">{selectedCustomerDetail.shipping_address}</span>
+                          
+                          {(selectedCustomerDetail.city_district || selectedCustomerDetail.state) && (
+                            <span className="block text-[#F5E6D3]/80">
+                              {selectedCustomerDetail.city_district}
+                              {selectedCustomerDetail.city_district && selectedCustomerDetail.state ? ', ' : ''}
+                              {selectedCustomerDetail.state}
+                            </span>
+                          )}
+                          
+                          {selectedCustomerDetail.pincode && (
+                            <span className="block font-mono text-[#C9A96A] mt-1 tracking-widest">
+                              {selectedCustomerDetail.pincode}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-[#F5E6D3]/50 italic">Complete address not provided</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-[#C9A96A]/10 flex justify-end">
+                <button onClick={() => setSelectedCustomerDetail(null)} className="bg-[#C9A96A] hover:bg-[#B38D46] text-[#080808] px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all">
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

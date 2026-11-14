@@ -60,7 +60,7 @@ export default function Catalog() {
               <Sparkles className="w-3.5 h-3.5" /> High Fashion & Exclusive Designs
             </div>
             <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#F5E6D3] tracking-tight">
-              The VELMORA Collection
+              The Wild Archive Collection
             </h1>
             <p className="mt-1.5 text-sm text-[#F5E6D3]/60 max-w-xl leading-relaxed">
               Discover avant-garde apparel, designer bags, and statement accessories from world-class independent creators.

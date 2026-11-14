@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import myLogo from "../assets/image.png";
 import {
   ShoppingCart,
   User as UserIcon,
@@ -32,14 +33,16 @@ export default function Navbar() {
     <>
       <header className="bg-[#080808]/95 backdrop-blur-md border-b border-[#C9A96A]/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          {/* Brand Logo - VELMORA */}
+          {/* Brand Logo - The Wild Archive */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-full bg-[#C9A96A] flex items-center justify-center text-[#080808] font-serif font-black text-xl shadow-md group-hover:scale-105 transition-transform">
-              V
-            </div>
+            <img 
+              src={myLogo}
+              alt="The Wild Archive Logo" 
+              className="w-12 h-12 object-contain bg-black rounded shadow-md group-hover:scale-105 transition-transform"
+            />
             <div className="flex flex-col">
-              <span className="text-2xl font-serif tracking-wider font-extrabold text-[#F5E6D3]">
-                VELMORA
+              <span className="text-xl sm:text-2xl font-serif tracking-wider font-extrabold text-[#F5E6D3]">
+                The Wild Archive
               </span>
               <span className="text-[9px] uppercase tracking-[0.25em] text-[#C9A96A] font-semibold -mt-1">
                 Modern Luxury

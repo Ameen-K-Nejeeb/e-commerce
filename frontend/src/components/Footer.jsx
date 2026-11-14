@@ -51,7 +51,7 @@ export default function Footer() {
                 V
               </div>
               <span className="text-2xl font-serif tracking-wider font-extrabold text-[#F5E6D3]">
-                VELMORA
+                The Wild Archive
               </span>
             </div>
             <p className="text-xs text-[#F5E6D3]/50 max-w-sm leading-relaxed font-medium">
@@ -85,9 +85,9 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div>
-            <h4 className="text-[#C9A96A] font-serif font-bold text-xs uppercase tracking-[0.2em] mb-4">Velmora Privé</h4>
+            <h4 className="text-[#C9A96A] font-serif font-bold text-xs uppercase tracking-[0.2em] mb-4">The Wild Archive Privé</h4>
             <p className="text-xs text-[#F5E6D3]/50 mb-3 font-medium">Subscribe for early access to limited seasonal drops.</p>
-            <form onSubmit={(e) => { e.preventDefault(); alert('Subscribed successfully to Velmora Privé!'); }} className="space-y-2">
+            <form onSubmit={(e) => { e.preventDefault(); alert('Subscribed successfully to The Wild Archive Privé!'); }} className="space-y-2">
               <input
                 type="email"
                 required
@@ -107,7 +107,7 @@ export default function Footer() {
 
         {/* Bottom Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#F5E6D3]/40 font-medium">
-          <p>© 2026 Velmora Modern Fashion. All rights reserved.</p>
+          <p>© 2026 The Wild Archive Modern Fashion. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span className="hover:text-[#C9A96A] cursor-pointer">Privacy Policy</span>
             <span className="hover:text-[#C9A96A] cursor-pointer">Terms of Service</span>

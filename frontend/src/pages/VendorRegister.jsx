@@ -26,7 +26,7 @@ export default function VendorRegister() {
         <div className="text-center">
           <Store className="w-8 h-8 text-[#C9A96A] mx-auto mb-4" />
           <h2 className="text-3xl font-serif font-extrabold text-[#F5E6D3]">Open Your Fashion House</h2>
-          <p className="mt-2 text-sm text-[#F5E6D3]/60">Join VELMORA to showcase your designs to the world.</p>
+          <p className="mt-2 text-sm text-[#F5E6D3]/60">Join The Wild Archive to showcase your designs to the world.</p>
         </div>
         
         {error && <div className="bg-red-900/30 text-red-400 p-4 border-l-4 border-red-500 rounded-r-xl">{error}</div>}

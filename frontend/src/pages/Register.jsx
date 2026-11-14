@@ -24,7 +24,7 @@ export default function Register() {
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[#080808] py-12 px-4">
       <div className="max-w-md w-full space-y-6 bg-[#111111] p-8 sm:p-10 rounded-3xl border border-[#C9A96A]/30">
         <div className="text-center">
-          <h2 className="text-3xl font-serif font-extrabold text-[#F5E6D3]">Join VELMORA</h2>
+          <h2 className="text-3xl font-serif font-extrabold text-[#F5E6D3]">Join The Wild Archive</h2>
           <p className="mt-2 text-sm text-[#F5E6D3]/60">Create an account to curate your fashion wardrobe.</p>
         </div>
         

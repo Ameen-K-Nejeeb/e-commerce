@@ -69,7 +69,7 @@ export default function Login() {
           </>
         )}
         <p className="text-center text-sm text-[#F5E6D3]/50 mt-6">
-          New to VELMORA? <Link to="/register" className="font-bold text-[#C9A96A] hover:text-[#B38D46]">Create an account</Link>
+          New to The Wild Archive? <Link to="/register" className="font-bold text-[#C9A96A] hover:text-[#B38D46]">Create an account</Link>
         </p>
       </div>
     </div>

@@ -12,7 +12,7 @@ export default function About() {
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#C9A96A]/30 bg-[#C9A96A]/10 mb-6">
           <Sparkles className="w-3.5 h-3.5 text-[#C9A96A]" />
           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#C9A96A]">
-            The Velmora Heritage
+            The The Wild Archive Heritage
           </span>
         </div>
 
@@ -24,7 +24,7 @@ export default function About() {
         </h1>
 
         <p className="text-[#F5E6D3]/70 text-base sm:text-lg max-w-2xl mx-auto font-medium leading-relaxed mb-10">
-          VELMORA was born from a singular vision: to bridge the world’s most sought-after independent fashion designers with discerning individuals who value authenticity, modern aesthetics, and breathtaking style.
+          The Wild Archive was born from a singular vision: to bridge the world’s most sought-after independent fashion designers with discerning individuals who value authenticity, modern aesthetics, and breathtaking style.
         </p>
 
         <Link
@@ -43,7 +43,7 @@ export default function About() {
               Curated Masterpieces, Direct From the Fashion House.
             </h2>
             <p className="text-[#F5E6D3]/80 font-medium leading-relaxed">
-              Unlike traditional retail models laden with middlemen, VELMORA operates as an exclusive multi-vendor sanctuary. Every garment and accessory in our collection is published directly by certified independent designers and historic fashion houses.
+              Unlike traditional retail models laden with middlemen, The Wild Archive operates as an exclusive multi-vendor sanctuary. Every garment and accessory in our collection is published directly by certified independent designers and historic fashion houses.
             </p>
             <p className="text-[#F5E6D3]/80 font-medium leading-relaxed">
               From premium Italian leathers and sustainable silks to hand-stitched detailing, every creation undergoes rigorous authentication to ensure it meets the highest standards of luxury fashion.
@@ -63,7 +63,7 @@ export default function About() {
       {/* Pillars of Excellence */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-xl mx-auto mb-16">
-          <h2 className="text-3xl font-serif font-bold text-[#C9A96A] mb-3">The Velmora Standard</h2>
+          <h2 className="text-3xl font-serif font-bold text-[#C9A96A] mb-3">The Wild Archive Standard</h2>
           <p className="text-[#F5E6D3]/60 text-sm font-medium">Built on exclusivity, quality, and timeless elegance.</p>
         </div>
 

@@ -139,7 +139,7 @@ export default function Cart() {
           key: data.razorpay_key,
           amount: data.amount,
           currency: data.currency,
-          name: 'VELMORA',
+          name: 'The Wild Archive',
           description: `Acquisition Ref #${data.order_id}`,
           order_id: data.razorpay_order_id,
           handler: async function (response) {
@@ -186,7 +186,7 @@ export default function Cart() {
 
   if (cart.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-32 text-center min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center bg-[#080808]">
+      <div className="mx-auto px-4 py-32 text-center min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center bg-[#080808]">
         <ShoppingBag className="w-16 h-16 text-[#C9A96A] mx-auto mb-6" />
         <h2 className="text-3xl font-serif font-black text-[#F5E6D3]">Your bag is empty</h2>
         <p className="text-[#F5E6D3]/60 mt-2 text-sm font-medium">Discover modern fashion and add pieces to your wardrobe.</p>
