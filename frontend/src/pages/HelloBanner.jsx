@@ -4,9 +4,15 @@ import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight } from 'lucide-react';
 
 const BACKGROUND_IMAGES = [
-  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070", // High-end Cinematic Fashion Shot
-  "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2070", // Atmospheric Runway Showcase
-  "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070"  // Premium Outdoor Designer Apparel
+  "https://images.unsplash.com/photo-1532453288672-3a27e9be9efd?q=80&w=2070", // Dark boutique clothing racks
+  "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=2070", 
+  "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070", 
+  "https://images.unsplash.com/photo-1618932260643-eee4a2f652a6?q=80&w=2070", // Flowing dark silk texture
+  "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2070", // Premium retail clothing store blur
+  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070", 
+  "https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070",
+  "https://images.unsplash.com/photo-1532453288672-3a27e9be9efd?q=80&w=2070",
+  "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=2070"
 ];
 
 export default function HeroBanner() {
@@ -15,7 +21,7 @@ export default function HeroBanner() {
   useEffect(() => {
     const slideInterval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, 4500); // Transitions to another high-end background view every few seconds for visual dynamism
+    }, 2500); // Transitions to another high-end background view every few seconds for visual dynamism
 
     return () => clearInterval(slideInterval);
   }, []);
